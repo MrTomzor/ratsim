@@ -64,10 +64,14 @@ public class RGBCameraROSPublisher : MonoBehaviour
     this._camera.ForceUpdateImage(unity_camera);
 
     // Update ROS Message
-    uint sec = (uint)Math.Truncate(this._timeStamp);
-    uint nanosec = (uint)((this._timeStamp - sec) * 1e+9);
-    this._message.header.stamp.sec = (int)sec;
-    this._message.header.stamp.nanosec = nanosec;
+    /* uint sec = (uint)Math.Truncate(this._timeStamp); */
+    /* uint nanosec = (uint)((this._timeStamp - sec) * 1e+9); */
+    /* this._message.header.stamp.sec = (int)sec; */
+    /* this._message.header.stamp.nanosec = nanosec; */
+
+    this._message.header.stamp.sec = 0;
+    this._message.header.stamp.nanosec = 0;
+
     this._message.data = this._camera.data;
     this._ros.Publish(this._topicName, this._message);
     Debug.Log("PUBLISHING IMG");
