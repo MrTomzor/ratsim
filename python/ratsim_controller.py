@@ -1,42 +1,63 @@
 import socket
 import json
+import time
 
-# Define the message structure
-message = {
-    "topic": "test_topic",
-    "type": "StringMessage",
-    "data": {
-        "header": {
-            "stepIndex": 1
-        },
-        "data": "Hello from Python!"
-    }
-}
-
-message2 = {
-    "topic": "test_topic",
-    "type": "StringMessage",
-    "data": {
-        "header": {
-            "stepIndex": 1
-        },
-        "data": "PES!"
-    }
-}
-
-# Serialize to JSON and append newline (required for Unity's line-based reader)
-json_str = json.dumps(message) + "\n"
-json_str2 = json.dumps(message2) + "\n"
-
-# Connect to Unity server
-HOST = '127.0.0.1'  # Use your Unity host IP here if running externally
+HOST = '127.0.0.1'
 PORT = 9000
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    print("Connecting to Unity...")
-    s.connect((HOST, PORT))
-    print("Connected. Sending message...")
-    s.sendall(json_str.encode('utf-8'))
-    s.sendall(json_str2.encode('utf-8'))
-    print("Message sent. Closing connection.")
+def send_and_receive_messages():
+    messages = [
+        {
+            "topic": "control/step",
+            "type": "StringMessage",
+            "data": {
+                "header": { "stepIndex": 0 },
+                "data": "Step please!"
+            }
+        },
+        {
+            "topic": "misc/number",
+            "type": "Int32Message",
+            "data": {
+                "header": { "stepIndex": 0 },
+                "data": 42
+            }
+        }
+    ]
 
+    request = json.dumps({ "messages": messages }) + "\n"
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        print("Connecting to Unity...")
+        sock.connect((HOST, PORT))
+
+        while True:
+            sendtime = time.time()
+            # print("Sending messages...")
+            sock.sendall(request.encode("utf-8"))
+
+            # Receive reply
+            buffer = b""
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                buffer += chunk
+                if b"\n" in buffer:
+                    break
+
+            response = json.loads(buffer.decode("utf-8-sig").strip())
+
+            for msg in response["messages"]:
+                print(f"[{msg['topic']}] ({msg['type']}) -> {msg['data']}")
+            dt = time.time() - sendtime
+            fps = 1 / dt
+            strlen = len(buffer)
+            # for msg in response["messages"]:
+            #     strlen += len(msg)
+            print("MSG BYTES: " + str(strlen))
+            bw = strlen / dt
+            print("FPS: " + str(fps) + " BW: " + str(bw))
+            # time.sleep(0.0001)
+
+send_and_receive_messages()

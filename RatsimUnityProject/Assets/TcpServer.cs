@@ -49,7 +49,8 @@ public class TcpServer : MonoBehaviour
     Dictionary<string, Type> messageTypeRegistry = new Dictionary<string, Type>
     {
         { "Lidar2DMessage", typeof(Lidar2DMessage) },
-        { "StringMessage", typeof(StringMessage) }
+        { "StringMessage", typeof(StringMessage) },
+        { "Int32Message", typeof(Int32Message) }
     };
 
     void HandleRawJson(string json)
@@ -74,9 +75,9 @@ public class TcpServer : MonoBehaviour
 
     void DispatchMessage(string topic, Message msg)
     {
-        Debug.Log("Dispatching message to topic: " + topic);
-        Debug.Log("Message type: " + msg.GetType().Name);
-        Debug.Log("Message data: " + JsonConvert.SerializeObject(msg));
+        //Debug.Log("Dispatching message to topic: " + topic);
+        //Debug.Log("Message type: " + msg.GetType().Name);
+        //Debug.Log("Message data: " + JsonConvert.SerializeObject(msg));
 
         foreach(var subscriber in subscribersByTopic[topic])
         {
@@ -101,13 +102,18 @@ public class TcpServer : MonoBehaviour
 
     void StringCallbackTest(StringMessage msg)
     {
-        Debug.Log("Received StringMessage: " + msg.data);
+        //Debug.Log("Received StringMessage: " + msg.data);
+    }
+
+    void DebugIntCallback(Int32Message msg)
+    {
+        //Debug.Log("Received int: " + msg.data);
     }
 
     public void Subscribe<T>(string topic, Action<T> callback) where T : Message
     {
 
-        if(subscribersByTopic.TryGetValue(topic, out var subscribers) == false)
+        if (subscribersByTopic.TryGetValue(topic, out var subscribers) == false)
         {
             subscribers = new List<Action<Message>>();
             subscribersByTopic[topic] = subscribers;
@@ -129,14 +135,15 @@ public class TcpServer : MonoBehaviour
         //Subscribe<StringMessage>("test_topic", SubCallbackTest);
         //HandleMessage("test_topic", new StringMessage { data = "Hello, World!" });
 
-        Subscribe<StringMessage>("test_topic", StringCallbackTest);
-
+        Subscribe<StringMessage>("control/step", StringCallbackTest);
+        Subscribe<Int32Message>("misc/number", DebugIntCallback);
         //TestMessageReceived();
-
-
+        Physics.simulationMode = SimulationMode.Script;
+        Application.targetFrameRate = 10000;
         serverThread = new Thread(StartServer);
         serverThread.IsBackground = true;
         serverThread.Start();
+        
     }
 
     void OnApplicationQuit()
@@ -144,6 +151,24 @@ public class TcpServer : MonoBehaviour
         listener?.Stop();
         serverThread?.Abort();
     }
+
+    public volatile bool stepRequested = false;
+
+    void Update()
+    {
+        if (stepRequested)
+        {
+            
+            // 🧠 Step Unity physics
+            Physics.Simulate(0.02f);
+            trackpos = (int) trackObject.transform.position.y;
+            stepRequested = false;
+            Debug.Log("Physics step requested and executed");
+        }
+    }
+
+    public GameObject trackObject;
+    int trackpos = 0;
 
     void StartServer()
     {
@@ -157,8 +182,65 @@ public class TcpServer : MonoBehaviour
         var stream = client.GetStream();
         var reader = new StreamReader(stream, Encoding.UTF8);
         writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        uint stepIndex = 0;
 
         while (client.Connected)
+        {
+            try
+            {
+                var line = reader.ReadLine();
+                if (line == null) continue;
+
+                var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+                var rawMsgs = wrapper["messages"] as Newtonsoft.Json.Linq.JArray;
+
+                foreach (var rawMsg in rawMsgs)
+                {
+                    HandleRawJson(rawMsg.ToString());
+                }
+
+                // 🧠 Step Unity physics
+                stepIndex++;
+                stepRequested = true;
+                while( stepRequested)
+                {
+                    // Wait for the step to be processed
+                    //Thread.Sleep(1);
+                }
+
+                // 📨 Reply with two messages
+                var replyMessages = new List<object>
+                {
+                    new {
+                        topic = "reply/string",
+                        type = "StringMessage",
+                        data = new StringMessage {
+                            data = "Step complete",
+                            header = new MessageHeader { stepIndex = stepIndex }
+                        }
+                    },
+                    new {
+                        topic = "reply/step_index",
+                        type = "Int32Message",
+                        data = new Int32Message {
+                            data = trackpos,
+                            header = new MessageHeader { stepIndex = stepIndex }
+                        }
+                    }
+                };
+
+                string replyJson = JsonConvert.SerializeObject(new { messages = replyMessages }) + "\n";
+                writer.Write(replyJson);
+                //Debug.Log("Sent reply");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Server loop error: " + e.Message);
+                break;
+            }
+        }
+
+        /*while (client.Connected)
         {
             try
             {
@@ -171,25 +253,14 @@ public class TcpServer : MonoBehaviour
                 Debug.Log("Received line");
                 HandleRawJson(line);
 
-                /*var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
-                var topic = json["topic"].ToString();
-                var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json["data"].ToString());
-
-                if (topicHandlers.TryGetValue(topic, out var handler))
-                {
-                    handler(data);
-                }
-                else
-                {
-                    Debug.LogWarning($"Unhandled topic: {topic}");
-                }*/
+                
             }
             catch (Exception e)
             {
                 Debug.LogError("Error in server loop: " + e.Message);
                 break;
             }
-        }
+        }*/
 
         client.Close();
         listener.Stop();
