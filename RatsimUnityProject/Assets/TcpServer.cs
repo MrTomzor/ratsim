@@ -24,6 +24,11 @@ public class StringMessage : Message
     public string data { get; set; }
 }
 
+public class Int32Message : Message
+{
+    public int data { get; set; }
+}
+
 public class Lidar2DMessage : Message
 {
     public float[] ranges { get; set; }
@@ -126,7 +131,7 @@ public class TcpServer : MonoBehaviour
 
         Subscribe<StringMessage>("test_topic", StringCallbackTest);
 
-        TestMessageReceived();
+        //TestMessageReceived();
 
 
         serverThread = new Thread(StartServer);
@@ -158,7 +163,13 @@ public class TcpServer : MonoBehaviour
             try
             {
                 var line = reader.ReadLine();
-                if (line == null) continue;
+                if (line == null)
+                {
+                    Debug.Log("Client disconnected or no data received");
+                    continue;
+                }
+                Debug.Log("Received line");
+                HandleRawJson(line);
 
                 /*var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
                 var topic = json["topic"].ToString();
