@@ -12,6 +12,8 @@ using Newtonsoft.Json; // Add Newtonsoft.Json via Unity Package Manager or .dll
 
 public class RoslikeTCPServer : MonoBehaviour
 {
+    public float physicsStepTime = 0.02f; // 50Hz
+
     static RoslikeTCPServer instance;
     public static RoslikeTCPServer GetInstance()
     {
@@ -24,6 +26,8 @@ public class RoslikeTCPServer : MonoBehaviour
 
     // Change the subscribers dictionary to support different message types per topic
     private Dictionary<string, List<Action<Message>>> subscribersByTopic = new();
+    private List<RoslikeTimer> timers = new List<RoslikeTimer>();
+
     private List<Tuple<string, Message>> receivedMessages = new List<Tuple<string, Message>>();
 
     List<Tuple<string, Message>> DeserializeMessages(Newtonsoft.Json.Linq.JArray rawMsgs)
@@ -69,15 +73,35 @@ public class RoslikeTCPServer : MonoBehaviour
         }
     }
 
+    public void RegisterTimerDiscrete( Action<TimerEvent> callback, uint stepsPerTick)
+    {
+        var timer = new RoslikeTimer(callback, true, stepsPerTick);
+        timers.Add(timer);
+    }
+
+    public void RegisterTimerContinuous(Action<TimerEvent> callback, float periodSeconds)
+    {
+        var timer = new RoslikeTimer(callback, false, periodSeconds);
+        timers.Add(timer);
+    }
+
+    void HandleTimers(uint elapsedPhysicsSteps, float elapsedSeconds)
+    {
+        foreach (var timer in timers)
+        {
+            timer.HandleSteps(elapsedPhysicsSteps, elapsedSeconds);
+        }
+    }
+
     public void Subscribe<T>(string topic, Action<T> callback) where T : Message
     {
 
-        if (subscribersByTopic.TryGetValue(topic, out var subscribers) == false)
+        if (subscribersByTopic.TryGetValue(topic, out var subscribersOfThisTopic) == false)
         {
-            subscribers = new List<Action<Message>>();
-            subscribersByTopic[topic] = subscribers;
+            subscribersOfThisTopic = new List<Action<Message>>();
+            subscribersByTopic[topic] = subscribersOfThisTopic;
         }
-        subscribers.Add((Message msg) =>
+        subscribersOfThisTopic.Add((Message msg) =>
         {
             if (msg is not T)
             {
@@ -88,6 +112,30 @@ public class RoslikeTCPServer : MonoBehaviour
         });
     }
 
+    public void PublishSynchronously(string topic, Message msg)
+    {
+
+        // Serialize the message
+        MessageEnvelope wrapper = new MessageEnvelope
+        (
+            topic: topic,
+            type: msg.GetType().Name,
+            data: msg
+        );
+
+        // Add to envelopes to publish, since publishing is done synchronously in the main thread
+        envelopesToPublish.Add(wrapper);
+    }
+
+    void SendAndClearEnvelopes()
+    {
+        string replyJson = JsonConvert.SerializeObject(new { messages = envelopesToPublish }) + "\n";
+        writer.Write(replyJson);
+                                
+        // Clear envelopes for next step
+        envelopesToPublish.Clear();
+    }
+
     void StepRequestCallback(StepRequestMessage msg)
     {
         if (msg.physicsEnabled != physicsEnabled)
@@ -96,6 +144,8 @@ public class RoslikeTCPServer : MonoBehaviour
         }
         physicsEnabled = msg.physicsEnabled;
     }
+
+    List<MessageEnvelope> envelopesToPublish = new List<MessageEnvelope>();
 
     void Start()
     {
@@ -140,14 +190,17 @@ public class RoslikeTCPServer : MonoBehaviour
             // Step Unity physics
             if (physicsEnabled)
             {
+                //Debug.Log("Stepping physics simulation...");
                 physicsStepIndex++;
-                Physics.Simulate(0.02f);
+                Physics.Simulate(physicsStepTime);
             }
             trackpos = (int)trackObject.transform.position.y;
-            stepRequested = false;
-            Debug.Log("Physics step requested and executed");
 
-            // Handle Publishers
+            // Handle Publishers and Timers
+            HandleTimers(1, physicsStepTime);
+            
+            // Signify end of all mainthread operations
+            stepRequested = false;
         }
     }
 
@@ -189,23 +242,23 @@ public class RoslikeTCPServer : MonoBehaviour
                     // Wait for the step to be processed by Update func calls
                 }
 
-                // Reply with at least one message
-                var replyMessages = new List<object>
-                {
-                    new MessageEnvelope (
+                // Add StepFinishedMessage to envelopes
+                PublishSynchronously("/sim_control/step_finished",
+                    new StepFinishedMessage
+                    {
+                        success = true
+                    });
+                /*envelopesToPublish.Add(new MessageEnvelope(
                         topic: "/sim_control/step_finished",
                         type: "StepFinishedMessage",
-                        data: new StepFinishedMessage {
+                        data: new StepFinishedMessage
+                        {
                             success = true
                         }
-                    )
-                };
+                    ));*/
 
-                // TODO - add all output messages from publishers (and thus call sensor readings)
-
-                string replyJson = JsonConvert.SerializeObject(new { messages = replyMessages }) + "\n";
-                writer.Write(replyJson);
-                //Debug.Log("Sent reply");
+                // Serialize, send and clear envelopes
+                SendAndClearEnvelopes();
             }
             catch (Exception e)
             {

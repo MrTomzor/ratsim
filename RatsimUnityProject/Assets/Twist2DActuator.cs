@@ -21,13 +21,13 @@ public class Twist2DActuator : MonoBehaviour
         var rb = GetComponent<Rigidbody>();
         rb.linearVelocity = forward + left;
         rb.angularVelocity = rotationRad;
-        
-        
+
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }

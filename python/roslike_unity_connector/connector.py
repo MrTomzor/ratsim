@@ -52,7 +52,7 @@ class RoslikeUnityConnector:
         }
         return json.dumps(payload) + "\n"
 
-    def queue_message_to_send(self, message: Message, topic: str):
+    def publish_synchronously(self, message: Message, topic: str):
         self.queued_messages.append(message)
         self.queued_messages_topics.append(topic)
 
@@ -60,7 +60,7 @@ class RoslikeUnityConnector:
         
         # Always send a step request message
         self.msg_sendtime = time.time()
-        self.queue_message_to_send(StepRequestMessage(enable_physics_step), "/sim_control/do_step")
+        self.publish_synchronously(StepRequestMessage(enable_physics_step), "/sim_control/do_step")
         
         # Pack and send the queued messages
         outbound_json = self.pack_messages_to_json(self.queued_messages, self.queued_messages_topics)
