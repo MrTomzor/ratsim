@@ -56,14 +56,19 @@ def convert_csharp_to_python(csharp_code: str):
 
 # === Example usage ===
 if __name__ == "__main__":
-    in_filename = sys.argv[1]
+    in_filename = "../../RatsimUnityProject/Assets/MessageDefs.cs"
+    if len(sys.argv) > 1:
+        in_filename = sys.argv[1]
+
+    print("Trying to open msg cs file " + in_filename)
+
     with open(in_filename, "r") as f:  # Your C# message file
         csharp_code = f.read()
 
     python_code = convert_csharp_to_python(csharp_code)
 
-    with open("messages.py", "w") as f:
+    with open("message_definitions.py", "w") as f:
         f.write(python_code)
 
-    print("✅ Generated messages.py with fields.")
+    print("Generated messages.py with fields.")
 

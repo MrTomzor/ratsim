@@ -1,16 +1,17 @@
 import socket
 import json
 import time
+# import roslike_unity_connector.message_definitions
+from . import message_definitions
 
-HOST = '127.0.0.1'
-PORT = 9000
 
-
-class TcpRoslikeConnector:
-    def __init__(self) -> None:
+class RoslikeUnityConnector:
+    def __init__(self, host_ip = '127.0.0.1', port = 9000) -> None:
+        self.host_ip = host_ip
+        self.port = port
         pass
 
-    def send_and_receive_messages(self):
+    def test_send_and_receive(self):
         messages = [
             {
                 "topic": "/sim_control/do_step",
@@ -32,7 +33,7 @@ class TcpRoslikeConnector:
     
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             print("Connecting to Unity...")
-            sock.connect((HOST, PORT))
+            sock.connect((self.host_ip, self.port))
     
             while True:
                 sendtime = time.time()
@@ -63,5 +64,6 @@ class TcpRoslikeConnector:
                 print("FPS: " + str(fps) + " BW: " + str(bw))
                 # time.sleep(0.0001)
 
-conn = TcpRoslikeConnector()
-conn.send_and_receive_messages()
+if __name__ == "__main__":
+    conn = RoslikeUnityConnector()
+    conn.test_send_and_receive()
