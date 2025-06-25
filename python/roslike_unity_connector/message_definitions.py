@@ -40,6 +40,13 @@ class Lidar2DMessage(Message):
         self.angleStart = angleStart
 
 
+class Twist2DMessage(Message):
+    def __init__(self, forward: float = None, left: float = None, radiansCounterClockwise: float = None):
+        self.forward = forward
+        self.left = left
+        self.radiansCounterClockwise = radiansCounterClockwise
+
+
 
 
 MESSAGE_TYPE_REGISTRY = {
@@ -55,5 +62,7 @@ MESSAGE_TYPE_REGISTRY = {
     "Int32Message": Int32Message,
 
     "Lidar2DMessage": Lidar2DMessage,
+
+    "Twist2DMessage": Twist2DMessage,
 
 }

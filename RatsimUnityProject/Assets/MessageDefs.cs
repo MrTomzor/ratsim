@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Message
 {
-    //public MessageHeader header { get; set; }
+
 }
 
 public class StepRequestMessage : Message
@@ -31,4 +31,11 @@ public class Lidar2DMessage : Message
     public int[] classes { get; set; }
     public float angleIncrement { get; set; }
     public float angleStart { get; set; }
+}
+
+public class Twist2DMessage : Message
+{
+    public float forward { get; set; }
+    public float left { get; set; }
+    public float radiansCounterClockwise { get; set; }
 }

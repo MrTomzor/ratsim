@@ -10,37 +10,48 @@ using UnityEngine.XR;
 using Newtonsoft.Json; // Add Newtonsoft.Json via Unity Package Manager or .dll
 
 
-public class TcpServer : MonoBehaviour
+public class RoslikeTCPServer : MonoBehaviour
 {
+    static RoslikeTCPServer instance;
+    public static RoslikeTCPServer GetInstance()
+    {
+        return instance;
+    }
+
     private TcpListener listener;
     private Thread serverThread;
     private StreamWriter writer;
 
     // Change the subscribers dictionary to support different message types per topic
     private Dictionary<string, List<Action<Message>>> subscribersByTopic = new();
+    private List<Tuple<string, Message>> receivedMessages = new List<Tuple<string, Message>>();
 
-    
-
-    void DispatchReceivedJsonMessage(string json)
+    List<Tuple<string, Message>> DeserializeMessages(Newtonsoft.Json.Linq.JArray rawMsgs)
     {
-        // Deserialize outer wrapper
-        var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-        string typeName = wrapper["type"].ToString();
-        string topic = wrapper["topic"].ToString();
-        var dataJson = wrapper["data"].ToString();
+        var messages = new List<Tuple<string, Message>>();
+        foreach (var rawMsg in rawMsgs)
+        {
+            // Deserialize outer wrapper
+            var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(rawMsg.ToString());
+            string typeName = wrapper["type"].ToString();
+            string topic = wrapper["topic"].ToString();
+            var dataJson = wrapper["data"].ToString();
 
-        //if (messageTypeRegistry.TryGetValue(typeName, out Type msgType))
-        Type msgType = MessageRegistry.GetMessageType(typeName);
-        if (msgType != null)
-        {
-            var fullJson = $"{{\"topic\":\"{topic}\",\"type\":\"{typeName}\",\"{nameof(dataJson)}\":{dataJson}}}";
-            var msg = (Message)JsonConvert.DeserializeObject(dataJson, msgType);
-            DispatchReceivedMessage(topic, msg);
+            //if (messageTypeRegistry.TryGetValue(typeName, out Type msgType))
+            Type msgType = MessageRegistry.GetMessageType(typeName);
+            if (msgType != null)
+            {
+                var fullJson = $"{{\"topic\":\"{topic}\",\"type\":\"{typeName}\",\"{nameof(dataJson)}\":{dataJson}}}";
+                var msg = (Message)JsonConvert.DeserializeObject(dataJson, msgType);
+
+                messages.Add(new Tuple<string, Message>(topic, msg));
+            }
+            else
+            {
+                Debug.LogWarning($"Unknown message type: {typeName}");
+            }
         }
-        else
-        {
-            Debug.LogWarning($"Unknown message type: {typeName}");
-        }
+        return messages;
     }
 
     void DispatchReceivedMessage(string topic, Message msg)
@@ -56,16 +67,6 @@ public class TcpServer : MonoBehaviour
                 action(msg);
             }
         }
-    }
-
-    void StringCallbackTest(StringMessage msg)
-    {
-        //Debug.Log("Received StringMessage: " + msg.data);
-    }
-
-    void DebugIntCallback(Int32Message msg)
-    {
-        //Debug.Log("Received int: " + msg.data);
     }
 
     public void Subscribe<T>(string topic, Action<T> callback) where T : Message
@@ -98,6 +99,16 @@ public class TcpServer : MonoBehaviour
 
     void Start()
     {
+        if (instance != null)
+        {
+            Debug.LogWarning("Multiple instances of TcpServer detected, destroying this one.");
+            Destroy(this);
+            return;
+        }
+        instance = this;
+        
+        
+
         Physics.simulationMode = SimulationMode.Script;
         Application.targetFrameRate = 10000;
         serverThread = new Thread(MainLoop);
@@ -120,6 +131,12 @@ public class TcpServer : MonoBehaviour
     {
         if (stepRequested)
         {
+            // Handle Subscriber calbacks
+            foreach (var msg in receivedMessages)
+            {
+                DispatchReceivedMessage(msg.Item1, msg.Item2);
+            }
+
             // Step Unity physics
             if (physicsEnabled)
             {
@@ -129,6 +146,8 @@ public class TcpServer : MonoBehaviour
             trackpos = (int)trackObject.transform.position.y;
             stepRequested = false;
             Debug.Log("Physics step requested and executed");
+
+            // Handle Publishers
         }
     }
 
@@ -159,13 +178,10 @@ public class TcpServer : MonoBehaviour
                 var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
                 var rawMsgs = wrapper["messages"] as Newtonsoft.Json.Linq.JArray;
 
-                // Call message subscription callbacks
-                foreach (var rawMsg in rawMsgs)
-                {
-                    DispatchReceivedJsonMessage(rawMsg.ToString());
-                }
+                // Deserialize messages
+                receivedMessages = DeserializeMessages(rawMsgs);
 
-                // Step Unity physics if applicable
+                // Call Unity Update to handle Subs and Pubs in main thread
                 stepIndex++;
                 stepRequested = true;
                 while (stepRequested)
@@ -185,7 +201,7 @@ public class TcpServer : MonoBehaviour
                     )
                 };
 
-                // TODO - pool all output messages from publishers (and thus call sensor readings)
+                // TODO - add all output messages from publishers (and thus call sensor readings)
 
                 string replyJson = JsonConvert.SerializeObject(new { messages = replyMessages }) + "\n";
                 writer.Write(replyJson);

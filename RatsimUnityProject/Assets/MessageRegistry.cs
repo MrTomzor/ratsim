@@ -26,6 +26,8 @@ public class MessageRegistry
         { "StringMessage", typeof(StringMessage) },
         { "Int32Message", typeof(Int32Message) },
         { "StepRequestMessage", typeof(StepRequestMessage) },
-        { "StepFinishedMessage", typeof(StepFinishedMessage) }
+        { "StepFinishedMessage", typeof(StepFinishedMessage) },
+        { "Twist2DMessage", typeof(Twist2DMessage) }
+        
     };
 }

@@ -120,6 +120,9 @@ class RoslikeUnityConnector:
             if t == topic:
                 messages.append(self.received_messages[i])
         return messages
+    
+    def log_connection_stats(self):
+        print("FPS: " + str(self.last_frame_fps) + " BW: " + str(self.last_frame_bw / 1000.0) + " kB/s")
 
     def test_send_and_receive(self):
 
@@ -132,5 +135,5 @@ class RoslikeUnityConnector:
             print("Receiving messages...")
             self.read_messages_from_unity()
 
-            print("FPS: " + str(self.last_frame_fps) + " BW: " + str(self.last_frame_bw / 1000.0) + " kB/s")
+            self.log_connection_stats()
             # time.sleep(0.0001)
