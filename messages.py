@@ -8,6 +8,13 @@ class Message:
     pass
 
 
+class MessageEnvelope(Message):
+    def __init__(self, topic: str = None, type: str = None, data: Message = None):
+        self.topic = topic
+        self.type = type
+        self.data = data
+
+
 class Message(Message):
     pass
 
@@ -38,22 +45,3 @@ class Lidar2DMessage(Message):
         self.classes = classes
         self.angleIncrement = angleIncrement
         self.angleStart = angleStart
-
-
-
-
-MESSAGE_TYPE_REGISTRY = {
-
-    "Message": Message,
-
-    "StepRequestMessage": StepRequestMessage,
-
-    "StepFinishedMessage": StepFinishedMessage,
-
-    "StringMessage": StringMessage,
-
-    "Int32Message": Int32Message,
-
-    "Lidar2DMessage": Lidar2DMessage,
-
-}

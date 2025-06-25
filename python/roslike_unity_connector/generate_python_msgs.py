@@ -48,10 +48,26 @@ def convert_csharp_to_python(csharp_code: str):
         "class Message:\n    pass\n"
     ]
     class_defs = extract_classes(csharp_code)
+
+    class_names = []
+
     for class_name, base_class, body in class_defs:
+        base_class = base_class or "Message"
         fields = extract_fields(body)
         py_class = generate_python_class(class_name, base_class, fields)
         output.append(py_class)
+
+        if base_class == "Message":  # Only register message subclasses
+            class_names.append(class_name)
+
+    # Add the registry at the end
+    registry_lines = ["\n\nMESSAGE_TYPE_REGISTRY = {"]
+    for name in class_names:
+        registry_lines.append(f'    "{name}": {name},')
+    registry_lines.append("}")
+
+    output.extend(registry_lines)
+
     return "\n\n".join(output)
 
 # === Example usage ===
