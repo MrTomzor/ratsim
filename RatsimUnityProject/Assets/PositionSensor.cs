@@ -23,6 +23,6 @@ public class PositionSensor : MonoBehaviour
 
         // Publish the message to the "/position" topic
 
-        RoslikeTCPServer.GetInstance().PublishSynchronously("/position", msg);
+        RoslikeTCPServer.GetInstance().Publish("/position", msg);
     }
 }

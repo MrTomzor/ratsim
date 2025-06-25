@@ -112,7 +112,7 @@ public class RoslikeTCPServer : MonoBehaviour
         });
     }
 
-    public void PublishSynchronously(string topic, Message msg)
+    public void Publish(string topic, Message msg)
     {
 
         // Serialize the message
@@ -243,7 +243,7 @@ public class RoslikeTCPServer : MonoBehaviour
                 }
 
                 // Add StepFinishedMessage to envelopes
-                PublishSynchronously("/sim_control/step_finished",
+                Publish("/sim_control/step_finished",
                     new StepFinishedMessage
                     {
                         success = true
