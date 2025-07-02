@@ -230,6 +230,7 @@ GameObject:
   - component: {fileID: 849495077}
   - component: {fileID: 849495076}
   - component: {fileID: 849495081}
+  - component: {fileID: 849495082}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -363,6 +364,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f723204076dfa8b46ae18beefb5939cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &849495082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 849495075}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b85fca8234da94afb3c986e7a42c4cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &963194225
@@ -703,6 +716,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b34a98f2f8c419e2abafd19dc6e0da0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  physicsStepTime: 0.02
   stepRequested: 0
   physicsEnabled: 1
   trackObject: {fileID: 849495075}
