@@ -23,7 +23,16 @@ class RoslikeUnityConnector:
     def connect(self):
         print("Connecting to Unity...")
         self.sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.host_ip, self.port))
+        while True:
+            try:
+                # Attempt to create a socket and connect
+                self.sock.connect((self.host_ip, self.port))
+                break
+            except socket.error as e:
+                print(f"Connection failed: {e}. Retrying in 1 second...")
+                time.sleep(1)
+        
+        
         print("connected")
 
     def message_to_dict(self, message: Message, topic: str) -> dict:
