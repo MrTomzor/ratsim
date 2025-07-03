@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17548fabe2442285dadbb20c7f1879c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numObjectsToSpawn: 5
+  numObjectsToSpawn: 10
   objectToSpawn: {fileID: 8673833415038655627, guid: 1ec4256e14d3a783bbedb20cf96a01ae, type: 3}
   spawnedObjects: []
   spawnArea: {fileID: 88108445}
@@ -171,7 +171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17548fabe2442285dadbb20c7f1879c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numObjectsToSpawn: 5
+  numObjectsToSpawn: 15
   objectToSpawn: {fileID: 5385523616117770957, guid: f53abfae5ee6a69ad91eccf683dcb9ce, type: 3}
   spawnedObjects: []
   spawnArea: {fileID: 88108445}
