@@ -21,7 +21,7 @@ class RoslikeUnityConnector:
         pass
 
     def connect(self):
-        print("Connecting to Unity...")
+        print("Waiting to connect to Unity...")
         self.sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:
             try:
@@ -29,7 +29,7 @@ class RoslikeUnityConnector:
                 self.sock.connect((self.host_ip, self.port))
                 break
             except socket.error as e:
-                print(f"Connection failed: {e}. Retrying in 1 second...")
+                print(f"Could not connect: {e}. Retrying in 1 second...")
                 time.sleep(1)
         
         

@@ -10,7 +10,7 @@ if __name__ == "__main__":
     conn.send_messages_and_step()
     conn.read_messages_from_unity()
 
-    reactive_controller = ReactiveController(2, 4, 1, 0.5, dist_threshold1=3, dist_threshold2=5) 
+    reactive_controller = ReactiveController(2, 4, 1, 0.5, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
 
     while True:
         lidarmsg = conn.get_received_messages("/lidar2d")[0]

@@ -4,13 +4,14 @@ import numpy as np
 # TODO - fix relative imports
 
 class ReactiveController:
-    def __init__(self, vel1, vel2, angvel1, angvel2, dist_threshold1 = 5, dist_threshold2 = 30):
+    def __init__(self, vel1, vel2, angvel1, angvel2, dist_threshold1 = 5, dist_threshold2 = 30, ignore_colored = False):
         self.vel1 = vel1
         self.vel2 = vel2
         self.angvel1 = angvel1
         self.angvel2 = angvel2
         self.dist_threshold1 = dist_threshold1
         self.dist_threshold2 = dist_threshold2
+        self.ignore_colored = ignore_colored
         pass
 
     def compute_forward_vel_and_angular_vel_for_lidar_msg(self, lidar_msg):
@@ -61,11 +62,21 @@ class ReactiveController:
         front_min_dist = np.inf
 
         num_rays = len(lidar_msg.ranges)
+        num_dims = (int)(len(lidar_msg.descriptors) / len(lidar_msg.ranges))
+
+        descs = np.array(lidar_msg.descriptors).reshape((num_rays, num_dims))
+
+
         for i in range(num_rays):
             angle = lidar_msg.angleStartDeg + i * lidar_msg.angleIncrementDeg
             distance = lidar_msg.ranges[i]
             if distance < 0:
                 continue
+
+            if self.ignore_colored:
+                desc = descs[i]
+                if np.linalg.norm(desc) > 0.1:
+                    continue
 
             if -front_sector_width_deg / 2 <= angle <= front_sector_width_deg / 2:
                 if front_min_dist is None or distance < front_min_dist:
