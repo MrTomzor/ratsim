@@ -12,6 +12,7 @@ using Newtonsoft.Json; // Add Newtonsoft.Json via Unity Package Manager or .dll
 
 public class RoslikeTCPServer : MonoBehaviour
 {
+    public bool verbose = false; // Enable verbose logging
     public float physicsStepTime = 0.02f; // 50Hz
 
     static RoslikeTCPServer instance;
@@ -41,11 +42,21 @@ public class RoslikeTCPServer : MonoBehaviour
             string topic = wrapper["topic"].ToString();
             var dataJson = wrapper["data"].ToString();
 
+            if (verbose)
+            {
+                Debug.Log($"Received message of type {typeName} on topic {topic}");
+            }
+
             //if (messageTypeRegistry.TryGetValue(typeName, out Type msgType))
-            Type msgType = MessageRegistry.GetMessageType(typeName);
+                Type msgType = MessageRegistry.GetMessageType(typeName);
             if (msgType != null)
             {
                 var fullJson = $"{{\"topic\":\"{topic}\",\"type\":\"{typeName}\",\"{nameof(dataJson)}\":{dataJson}}}";
+                if (verbose)
+                {
+                    Debug.Log($"Deserializing message: {fullJson}");
+                }
+
                 var msg = (Message)JsonConvert.DeserializeObject(dataJson, msgType);
 
                 messages.Add(new Tuple<string, Message>(topic, msg));
@@ -222,7 +233,7 @@ public class RoslikeTCPServer : MonoBehaviour
 
         while (client.Connected)
         {
-            try
+            
             {
                 // Read incoming messages
                 var line = reader.ReadLine();
@@ -260,11 +271,11 @@ public class RoslikeTCPServer : MonoBehaviour
                 // Serialize, send and clear envelopes
                 SendAndClearEnvelopes();
             }
-            catch (Exception e)
+            /*catch (Exception e)
             {
                 Debug.LogError("Server loop error: " + e.Message);
                 break;
-            }
+            }*/
         }
 
         client.Close();

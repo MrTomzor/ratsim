@@ -85,7 +85,7 @@ public class SemanticLidarSensor : MonoBehaviour
 
             if (debugDrawRays)
             {
-                Debug.DrawLine(transform.position, transform.position + dirvec * (msg.ranges[i] < 0 ? maxRange : msg.ranges[i]), Color.red, 1f);
+                Debug.DrawLine(transform.position, transform.position + dirvec * (msg.ranges[i] < 0 ? maxRange : msg.ranges[i]), Color.red, 0);
 
             }
         }
