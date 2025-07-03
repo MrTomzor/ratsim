@@ -16,7 +16,7 @@ public class Twist2DActuator : MonoBehaviour
         // Apply the twist to the GameObject
         Vector3 forward = transform.forward * msg.forward;
         Vector3 left = -transform.right * msg.left;
-        Vector3 rotationRad = new Vector3(0, msg.radiansCounterClockwise, 0);
+        Vector3 rotationRad = new Vector3(0, -msg.radiansCounterClockwise, 0);
 
         var rb = GetComponent<Rigidbody>();
         rb.linearVelocity = forward + left;

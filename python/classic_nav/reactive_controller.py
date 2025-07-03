@@ -69,6 +69,8 @@ class ReactiveController:
 
         for i in range(num_rays):
             angle = lidar_msg.angleStartDeg + i * lidar_msg.angleIncrementDeg
+            angle = -angle  # because Unity Y rotation is clockwise, but we want counter-clockwise
+
             distance = lidar_msg.ranges[i]
             if distance < 0:
                 continue

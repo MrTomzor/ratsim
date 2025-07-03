@@ -3,7 +3,7 @@ from roslike_unity_connector.connector import *
 import numpy as np
 
 class ForagerEnv(gym.Env):
-    def __init__(self, config, maxvel = 5, maxangvel = 2.0):
+    def __init__(self, maxvel = 5, maxangvel = 2.0, reward_scale = 10.0):
         super(ForagerEnv, self).__init__()
 
         # Init ROSlike conn
@@ -12,13 +12,15 @@ class ForagerEnv(gym.Env):
 
         self.maxvel = maxvel
         self.maxangvel = maxangvel
+        self.reward_scale = reward_scale
 
         # Do one step to get first lidar msg and assign dimensions
+        print("ForagerEnv: Initializing environment and getting first lidar message...")
         self.conn.send_messages_and_step()
         self.conn.read_messages_from_unity()
         self.latest_lidar_msg = self.conn.get_received_messages("/lidar2d")[0]
+        print("ForagerEnv: First lidar message received.")
 
-        self.config = config
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2,))  # normalized forward velocity and angular velocity
         num_obsvs = len(self.latest_lidar_msg.ranges) + len(self.latest_lidar_msg.descriptors)
         self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(num_obsvs,))
@@ -51,7 +53,7 @@ class ForagerEnv(gym.Env):
         pickup_msgs = self.conn.get_received_messages("/reward_basic")
         for msg in pickup_msgs:
             if isinstance(msg, Int32Message):
-                reward += msg.data
+                reward += msg.data * self.reward_scale
             else:
                 print(f"Unexpected message type: {type(msg)} in rewards topic")
 
