@@ -12,6 +12,8 @@ public class SpawnerBasic : MonoBehaviour
     public bool checkIfOccupied = false;
     public float overlapSphereRadius = 0.5f;
 
+    public string resetTopicName = "/respawn_rat";
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -22,10 +24,27 @@ public class SpawnerBasic : MonoBehaviour
 
         var conn = RoslikeTCPServer.GetInstance();
         conn.RegisterTimerDiscrete(HandleObjectSpawning, 1);
+        conn.Subscribe<StringMessage>(resetTopicName, ResetObjectsCallback);
 
         HandleObjectSpawning(null); // Initial call to spawn objects
 
 
+    }
+    
+    public void ResetObjectsCallback(StringMessage stringMessage)
+    {
+        // Destroy all spawned objects
+        foreach (var obj in spawnedObjects)
+        {
+            if (obj != null)
+            {
+                Destroy(obj);
+            }
+        }
+        spawnedObjects.Clear();
+
+        // Re-spawn objects
+        HandleObjectSpawning(null);
     }
 
     public void HandleObjectSpawning(TimerEvent ev)
@@ -64,11 +83,11 @@ public class SpawnerBasic : MonoBehaviour
                     }
                 }
 
-                if(foundNonSelf)
+                if (foundNonSelf)
                 {
                     continue; // If the position is occupied, skip this position
                 }
-                
+
                 // Also raycast down to check if the position is above the ground
                 RaycastHit hit;
                 if (!Physics.Raycast(randomPosition, Vector3.down, out hit, 100f))
