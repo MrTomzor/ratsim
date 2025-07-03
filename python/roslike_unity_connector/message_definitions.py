@@ -33,11 +33,12 @@ class Int32Message(Message):
 
 
 class Lidar2DMessage(Message):
-    def __init__(self, ranges: List[float] = None, classes: List[int] = None, angleIncrement: float = None, angleStart: float = None):
+    def __init__(self, ranges: List[float] = None, descriptors: List[float] = None, angleIncrementDeg: int = None, angleStartDeg: int = None, maxRange: float = None):
         self.ranges = ranges
-        self.classes = classes
-        self.angleIncrement = angleIncrement
-        self.angleStart = angleStart
+        self.descriptors = descriptors
+        self.angleIncrementDeg = angleIncrementDeg
+        self.angleStartDeg = angleStartDeg
+        self.maxRange = maxRange
 
 
 class Twist2DMessage(Message):

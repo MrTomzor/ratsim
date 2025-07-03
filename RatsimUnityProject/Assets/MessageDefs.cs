@@ -28,9 +28,10 @@ public class Int32Message : Message
 public class Lidar2DMessage : Message
 {
     public float[] ranges { get; set; }
-    public int[] classes { get; set; }
-    public float angleIncrement { get; set; }
-    public float angleStart { get; set; }
+    public float[] descriptors { get; set; }
+    public int angleIncrementDeg { get; set; }
+    public int angleStartDeg { get; set; }
+    public float maxRange { get; set; }
 }
 
 public class Twist2DMessage : Message
