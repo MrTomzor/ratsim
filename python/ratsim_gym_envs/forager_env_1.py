@@ -44,7 +44,7 @@ class ForagerEnv(gym.Env):
 
         # Reset the environment to an initial state
         # return self.observation_space.sample()  # Return a random observation for now
-        return observation  # Return a random observation for now
+        return observation, None  # Return a random observation for now
 
     def step(self, action):
         # Apply the action and return the new state, reward, done flag, and info

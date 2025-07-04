@@ -828,7 +828,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b34a98f2f8c419e2abafd19dc6e0da0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  verbose: 1
+  verbose: 0
   physicsStepTime: 0.02
   stepRequested: 0
   physicsEnabled: 1
@@ -1158,6 +1158,10 @@ PrefabInstance:
     - target: {fileID: 6645319934695398768, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_CollisionDetection
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
+      propertyPath: maxRange
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: angleEndDeg

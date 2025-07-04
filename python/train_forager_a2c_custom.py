@@ -168,15 +168,12 @@ for ep in range(EPISODES):
     ep_reward = 0
     train_time = 0
     for step in range(MAX_STEPS):
-        # obs_tensor = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0)
-        # action = actor(obs_tensor).detach().numpy()[0]
         action = actor(obs_tensor).detach().cpu().numpy()[0]
         noise = NOISE_SCALE * np.random.randn(act_dim)
         action = np.clip(action + noise, -act_limit, act_limit)
         next_obs, reward, done, trunc, _ = env.step(action)
-        # if done:
-        #     print("DONE!")
+
         buffer.push((obs, action, reward, next_obs, float(done)))
         obs = next_obs
         ep_reward += reward
@@ -186,8 +183,12 @@ for ep in range(EPISODES):
         train_end = time.time()
         train_time += (train_end - train_start)
 
+        # env.conn.log_connection_stats()
+            
+
         if done or trunc:
             break
 
     ep_time = time.time() - ep_start 
-    print(f"Episode {ep} Reward: {ep_reward:.2f} Episode Time: {ep_time:.2f}s Train Time: {train_time:.2f}s")
+    ep_time_no_train = time.time() - ep_start - train_time
+    print(f"Episode {ep} Reward: {ep_reward:.2f} Episode Time: {ep_time:.2f}s Train Time: {train_time:.2f}s Sim: {ep_time_no_train:.2f}s")
