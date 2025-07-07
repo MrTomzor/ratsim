@@ -91,8 +91,9 @@ public class SemanticLidarSensor : MonoBehaviour
         }
         if (debugDrawRays)
         {
-            Debug.Log("ranges: " + string.Join(", ", msg.ranges));
-            Debug.Log("num hits: " + numhit);
+            //Debug.Log("ranges: " + string.Join(", ", msg.ranges));
+            //Debug.Log("num hits: " + numhit);
+        
         }
 
 
