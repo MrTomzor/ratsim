@@ -15,6 +15,10 @@ if __name__ == "__main__":
         # lidarmsg = conn.get_received_messages("/lidar2d")[0]
         # twistmsg = reactive_controller.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
         # twistmsg = reactive_controller.step(last_obsv)
-        last_obsv = sim.step()
+        last_obsv, was_timeout = sim.step()
+        if was_timeout:
+            break
         sim.conn.log_connection_stats()
+
+    print("loop ended, saving traj")
 

@@ -18,12 +18,14 @@ class NavSim():
         self.conn.read_messages_from_unity()
 
     def step(self, action_dict = {}):
+        sim_ended = False
+
         for topic in action_dict.keys():
             for msg in action_dict[topic]:
                 self.conn.publish(msg, topic)
 
         self.conn.send_messages_and_step()
-        self.conn.read_messages_from_unity()
+        was_timeout = self.conn.read_messages_from_unity()
 
         obsv_dict = self.conn.get_all_received_messages_and_topics_dict()
 
@@ -31,7 +33,8 @@ class NavSim():
         obsv_dict = self.apply_noise_models(obsv_dict)
 
         self.num_physics_steps += 1
-        return obsv_dict
+
+        return obsv_dict, was_timeout
 
     def apply_noise_models(self, msgs_dict):
         # TODO 

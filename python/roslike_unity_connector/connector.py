@@ -4,6 +4,7 @@ import time
 # from . import message_definitions
 from .message_definitions import *
 from .message_envelope import *
+import select
 
 
 class RoslikeUnityConnector:
@@ -18,6 +19,8 @@ class RoslikeUnityConnector:
 
         self.received_messages = []
         self.receive_messages_topics = []
+
+        self.timeout_seconds = 1
         pass
 
     def connect(self):
@@ -88,14 +91,33 @@ class RoslikeUnityConnector:
         self.receive_messages_topics.clear()
 
         # Read JSON msgs
+        # buffer = b""
+        # while True:
+        #     chunk = self.sock.recv(4096)
+        #     if not chunk:
+        #         break
+        #     buffer += chunk
+        #     if b"\n" in buffer:
+        #         break
+
+        self.sock.setblocking(0)
+        was_timeout = False
         buffer = b""
         while True:
-            chunk = self.sock.recv(4096)
-            if not chunk:
+            chunk = None
+            ready = select.select([self.sock], [], [], self.timeout_seconds)
+            if ready[0]:
+                chunk = self.sock.recv(4096)
+            else:
+                was_timeout = True
                 break
             buffer += chunk
             if b"\n" in buffer:
                 break
+
+        if was_timeout:
+            return 1
+        
 
         response = json.loads(buffer.decode("utf-8-sig").strip())
 
@@ -121,6 +143,8 @@ class RoslikeUnityConnector:
 
         self.last_frame_fps = 1 / dt
         self.last_frame_bw = strlen / dt
+
+        return 0
 
     def get_received_messages(self, topic: str):
         # Return list of all messages received on the specified topic
