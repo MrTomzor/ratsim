@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 1803348227048255791}
   - component: {fileID: 1764653715286217585}
   - component: {fileID: 8404249312285438026}
+  - component: {fileID: 9209674583849767778}
   m_Layer: 0
   m_Name: RAT_1
   m_TagString: Untagged
@@ -262,6 +263,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   topic: /rat1_pose
+--- !u!114 &9209674583849767778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675505943394758802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d72a6efd8a46d3b0b2847867851aa1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /rat1_teleport
 --- !u!1 &1815150826476604271
 GameObject:
   m_ObjectHideFlags: 0
