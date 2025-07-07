@@ -14,6 +14,9 @@ class ReactiveController:
         self.ignore_colored = ignore_colored
         pass
 
+    def step(self, input_msgs):
+        lidarmsg = conn.get_received_messages("/lidar2d")[0]
+
     def compute_forward_vel_and_angular_vel_for_lidar_msg(self, lidar_msg):
         left_min_dist, front_min_dist, right_min_dist = self.compute_sector_dists(lidar_msg)
         secdists = np.array([left_min_dist, front_min_dist, right_min_dist])

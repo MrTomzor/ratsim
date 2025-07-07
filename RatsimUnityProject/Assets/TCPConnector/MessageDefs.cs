@@ -30,6 +30,11 @@ public class Float32Message : Message
     public float data { get; set; }
 }
 
+public class BoolMessage : Message
+{
+    public bool data { get; set; }
+}
+
 public class Lidar2DMessage : Message
 {
     public float[] ranges { get; set; }

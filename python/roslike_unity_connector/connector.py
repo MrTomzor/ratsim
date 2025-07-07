@@ -129,6 +129,16 @@ class RoslikeUnityConnector:
             if t == topic:
                 messages.append(self.received_messages[i])
         return messages
+
+    def get_all_received_messages_and_topics_dict(self):
+        # Return list of all messages received on the specified topic
+        res = {}
+        for i, top in enumerate(self.receive_messages_topics):
+            msg = self.received_messages[i]
+            if not top in res.keys():
+                res[top] = []
+            res[top].append(msg)
+        return res
     
     def log_connection_stats(self):
         print("FPS: " + str(self.last_frame_fps) + " BW: " + str(self.last_frame_bw / 1000.0) + " kB/s")

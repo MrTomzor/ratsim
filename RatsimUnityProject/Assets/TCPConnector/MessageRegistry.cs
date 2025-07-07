@@ -28,6 +28,7 @@ public class MessageRegistry
         { "StepRequestMessage", typeof(StepRequestMessage) },
         { "StepFinishedMessage", typeof(StepFinishedMessage) },
         { "Twist2DMessage", typeof(Twist2DMessage) },
-        { "Float32Message", typeof(Float32Message) }
+        { "Float32Message", typeof(Float32Message) },
+        { "BoolMessage", typeof(BoolMessage)}
     };
 }

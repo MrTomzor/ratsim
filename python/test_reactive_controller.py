@@ -1,6 +1,6 @@
 from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
-from classic_nav.reactive_controller import *
+from nav.reactive_controller import *
 
 if __name__ == "__main__":
     conn = RoslikeUnityConnector()

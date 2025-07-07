@@ -3,6 +3,10 @@ using UnityEngine;
 public class Twist2DActuator : MonoBehaviour
 {
     RoslikeTCPServer conn;
+    public float maxLinearVelocity = 10f;
+    public float maxAngularVelocity = 5f;
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
