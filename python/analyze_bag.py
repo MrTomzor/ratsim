@@ -8,6 +8,7 @@ if __name__ == "__main__":
     bag = MessageBag(save_filename)
     print("num steps: " + str(len(bag.steps)))
 
+
     for step in bag.steps:
         print(step)
 

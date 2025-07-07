@@ -100,6 +100,9 @@ GameObject:
   - component: {fileID: 9219320692642276609}
   - component: {fileID: 7081735771137792426}
   - component: {fileID: 3783130376408787828}
+  - component: {fileID: 1803348227048255791}
+  - component: {fileID: 1764653715286217585}
+  - component: {fileID: 8404249312285438026}
   m_Layer: 0
   m_Name: RAT_1
   m_TagString: Untagged
@@ -121,6 +124,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8893812422077116692}
+  - {fileID: 3911954478716121404}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &6645319934695398768
@@ -148,8 +152,8 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 84
+  m_CollisionDetection: 1
 --- !u!114 &441888008279963221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -162,6 +166,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f723204076dfa8b46ae18beefb5939cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxLinearVelocity: 10
+  maxAngularVelocity: 5
 --- !u!114 &9219320692642276609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,13 +192,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05267ae5d39a2f06cb04bb9c3ac108e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  angleStartDeg: 45
-  angleEndDeg: 45
-  angleIncrementDeg: 5
-  maxRange: 100
+  angleStartDeg: -90
+  angleEndDeg: 90
+  angleIncrementDeg: 10
+  maxRange: 60
   descriptorDimension: 3
   topicName: /lidar2d
-  debugDrawRays: 0
+  debugDrawRays: 1
 --- !u!135 &3783130376408787828
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -214,6 +220,48 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1803348227048255791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675505943394758802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c3c1d92f21ad8d499b716f37e1f0753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topicName: /respawn_rat
+--- !u!114 &1764653715286217585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675505943394758802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720755947c37574e98ad0831fcb54f1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  humanControlEnabled: 0
+  enableTopic: /enable_human_control
+  cameraObject: {fileID: 4354631481880064101}
+  velocityController: {fileID: 441888008279963221}
+--- !u!114 &8404249312285438026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675505943394758802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1f21b7040622cac4a6b5505ffc6d37d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /rat1_pose
 --- !u!1 &1815150826476604271
 GameObject:
   m_ObjectHideFlags: 0
@@ -472,6 +520,98 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &4354631481880064101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3911954478716121404}
+  - component: {fileID: 8316416262114376727}
+  - component: {fileID: 6186023179724351064}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3911954478716121404
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4354631481880064101}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -4.1, y: 3.674, z: -9.03}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6529735708114265031}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &8316416262114376727
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4354631481880064101}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: -1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!81 &6186023179724351064
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4354631481880064101}
+  m_Enabled: 1
 --- !u!1 &5278955909795711973
 GameObject:
   m_ObjectHideFlags: 0

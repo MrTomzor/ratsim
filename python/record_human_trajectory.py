@@ -14,6 +14,8 @@ if __name__ == "__main__":
     # First step
     last_obsv = sim.step()
     sim.enable_human_control()
+
+    filter_topics = ["/rat1_pose", "/rat1_velocity"]
     
     bag = MessageBag()
     while True:
@@ -24,7 +26,7 @@ if __name__ == "__main__":
         if was_timeout:
             break
 
-        bag.add_step_msgs(last_obsv)
+        bag.add_step_msgs(last_obsv, filter_topics)
         sim.conn.log_connection_stats()
 
     print("loop ended, saving traj")
