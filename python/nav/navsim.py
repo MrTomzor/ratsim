@@ -5,11 +5,12 @@ class NavSim():
     def __init__(self):
         self.conn = RoslikeUnityConnector(verbose=False)
         self.conn.connect()
-        self.step_time = 0.02
+        self.step_time = 0.1
         self.num_physics_steps = 0
 
         self.conn.send_messages_and_step()
         self.conn.read_messages_from_unity()
+        self.noise_models = {}
 
     def enable_human_control(self):
         msg = BoolMessage(data = True)
@@ -36,8 +37,14 @@ class NavSim():
 
         return obsv_dict, was_timeout
 
+    def add_noise_model(self, topic, model):
+        self.noise_models[topic] = model
+
     def apply_noise_models(self, msgs_dict):
-        # TODO 
+        for topic in msgs_dict.keys():
+            if topic in self.noise_models.keys():
+                msgs_dict[topic] = self.noise_models[topic].apply_noise(msgs_dict[topic])
+
         return msgs_dict
 
     pass

@@ -4,6 +4,7 @@ from roslike_unity_connector.bag import MessageBag
 from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
 from nav.reactive_controller import *
+from nav.noise_models import *
 
 import sys
 
@@ -12,6 +13,10 @@ if __name__ == "__main__":
     in_bag_filename = sys.argv[1]
     out_bag_filename = sys.argv[2]
     bag = MessageBag(in_bag_filename)
+
+    # Add noise models
+    # sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(1))
+    # sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
 
     # First step
     last_obsv = sim.step()

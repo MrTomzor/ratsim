@@ -6,6 +6,7 @@ from roslike_unity_connector.message_definitions import *
 from nav.reactive_controller import *
 
 import sys
+import time
 
 if __name__ == "__main__":
     sim = NavSim()
@@ -18,7 +19,12 @@ if __name__ == "__main__":
     filter_topics = ["/rat1_pose", "/rat1_velocity"]
     
     bag = MessageBag()
+
+    fps = 60.0
+    step_target_time = 1/fps
+
     while True:
+        stepstart = time.time()
         # lidarmsg = conn.get_received_messages("/lidar2d")[0]
         # twistmsg = reactive_controller.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
         # twistmsg = reactive_controller.step(last_obsv)
@@ -27,6 +33,12 @@ if __name__ == "__main__":
             break
 
         bag.add_step_msgs(last_obsv, filter_topics)
+
+        steptime = time.time() - stepstart
+
+        sleeptime = step_target_time - steptime
+        if sleeptime > 0:
+            time.sleep(sleeptime)
         sim.conn.log_connection_stats()
 
     print("loop ended, saving traj")
