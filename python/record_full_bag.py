@@ -11,7 +11,9 @@ import sys
 if __name__ == "__main__":
     sim = NavSim()
     in_bag_filename = sys.argv[1]
-    out_bag_filename = sys.argv[2]
+    out_bag_filename = in_bag_filename.replace(".pickle","") + "_full.pickle"
+    if len(sys.argv) >= 3:
+        out_bag_filename = sys.argv[2]
     bag = MessageBag(in_bag_filename)
 
     # Add noise models
@@ -20,12 +22,16 @@ if __name__ == "__main__":
 
     # First step
     last_obsv = sim.step()
-    sim.enable_human_control()
     
     # Teleporting and sensing
     bag2 = MessageBag()
 
     pose_topic = "/rat1_pose"
+
+    index = 0
+    steps_total = len(bag.steps)
+    print_period = 50
+
     for step in bag.steps:
         if not pose_topic in step.keys():
             continue
@@ -36,6 +42,11 @@ if __name__ == "__main__":
         bag2.add_step_msgs(obsv)
         if term:
             break
+
+        if index % print_period == 0:
+            print("Step " + str(index) + "/" + str(steps_total))
+            sim.conn.log_connection_stats()
+        index += 1
 
     print("traj replayed, saving full bag")
     print("num steps: " + str(len(bag2.steps)))

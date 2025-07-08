@@ -15,7 +15,10 @@ class ReactiveController:
         pass
 
     def step(self, input_msgs):
-        lidarmsg = conn.get_received_messages("/lidar2d")[0]
+        # lidarmsg = conn.get_received_messages("/lidar2d")[0]
+        # print(input_msgs)
+        lidarmsg = input_msgs["/lidar2d"][0]
+        return self.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
 
     def compute_forward_vel_and_angular_vel_for_lidar_msg(self, lidar_msg):
         left_min_dist, front_min_dist, right_min_dist = self.compute_sector_dists(lidar_msg)
@@ -59,7 +62,7 @@ class ReactiveController:
                 res.radiansCounterClockwise = turn_angrate
         return res
 
-    def compute_sector_dists(self, lidar_msg: Lidar2DMessage, front_sector_width_deg = 60):
+    def compute_sector_dists(self, lidar_msg: Lidar2DMessage, front_sector_width_deg = 60, max_abs_deg = 90):
         left_min_dist = np.inf
         right_min_dist = np.inf
         front_min_dist = np.inf
@@ -82,6 +85,9 @@ class ReactiveController:
                 desc = descs[i]
                 if np.linalg.norm(desc) > 0.1:
                     continue
+
+            if np.abs(angle) > max_abs_deg:
+                continue
 
             if -front_sector_width_deg / 2 <= angle <= front_sector_width_deg / 2:
                 if front_min_dist is None or distance < front_min_dist:

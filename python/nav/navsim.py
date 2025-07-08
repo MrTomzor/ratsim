@@ -2,15 +2,16 @@ from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
 
 class NavSim():
-    def __init__(self):
-        self.conn = RoslikeUnityConnector(verbose=False)
-        self.conn.connect()
+    def __init__(self, dont_connect = False):
         self.step_time = 0.1
         self.num_physics_steps = 0
-
-        self.conn.send_messages_and_step()
-        self.conn.read_messages_from_unity()
         self.noise_models = {}
+
+        if not dont_connect:
+            self.conn = RoslikeUnityConnector(verbose=False)
+            self.conn.connect()
+            self.conn.send_messages_and_step()
+            self.conn.read_messages_from_unity()
 
     def enable_human_control(self):
         msg = BoolMessage(data = True)
@@ -43,7 +44,8 @@ class NavSim():
     def apply_noise_models(self, msgs_dict):
         for topic in msgs_dict.keys():
             if topic in self.noise_models.keys():
-                msgs_dict[topic] = self.noise_models[topic].apply_noise(msgs_dict[topic])
+                for i in range(len(msgs_dict[topic])):
+                    msgs_dict[topic][i] = self.noise_models[topic].apply_noise(msgs_dict[topic][i])
 
         return msgs_dict
 

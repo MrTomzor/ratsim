@@ -2,9 +2,45 @@ from roslike_unity_connector.bag import MessageBag
 from roslike_unity_connector.message_definitions import Twist2DMessage
 import matplotlib.pyplot as plt
 from nav.utils import *
+import numpy as np
 
 import sys
 import time
+import os
+
+def plot_trajs():
+    print("Num filenames" + str(len(sys.argv) - 1))
+    filenames = sys.argv[1:]
+    pose_topic = "/rat1_pose"
+
+    if not filenames:
+        print("Usage: python script.py file1.bag [file2.bag ...]")
+        return
+
+    plt.figure()
+
+    for filename in filenames:
+        bag = MessageBag(filename)
+        print(f"{filename}: num steps = {len(bag.steps)}")
+
+        x, z = [], []
+
+        for step in bag.steps:
+            if pose_topic not in step:
+                continue
+            pose_msg = step[pose_topic][0]
+            z.append(pose_msg.forward)
+            x.append(-pose_msg.left)  # Invert left for Unity-style x
+
+        label = os.path.basename(filename)
+        plt.plot(x, z, label=label)
+
+    plt.xlabel("x (unity)")
+    plt.ylabel("z (unity)")
+    plt.gca().set_aspect("equal")
+    plt.legend()
+    plt.title("Trajectories")
+    plt.show()
 
 def plot_traj():
     save_filename = sys.argv[1]
@@ -80,22 +116,34 @@ def plot_data_cont():
     
         # ax.relim()
         # ax.autoscale_view()
+        
+        # ax.set_xlim(-30, 30)  # x-axis range
+        # ax.set_ylim(-30, 30)  # z-axis range
 
-        ax.set_xlim(-30, 30)  # x-axis range
-        ax.set_ylim(-30, 30)  # z-axis range
+        # Combine trajectory and lidar points
+        # all_x = np.concatenate((x, lidar_x)) if 'lidar_x' in locals() else np.array(x)
+        # all_z = np.concatenate((z, lidar_z)) if 'lidar_z' in locals() else np.array(z)
+        all_x = np.array(x)
+        all_z = np.array(z)
+        
+        # Compute bounds with margin
+        margin = 100.0  # You can tweak this
+        x_min, x_max = np.min(all_x) - margin, np.max(all_x) + margin
+        z_min, z_max = np.min(all_z) - margin, np.max(all_z) + margin
+        
+        # Set axis limits
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(z_min, z_max)
     
         plt.draw()
-        plt.pause(0.001)  # Allow GUI events to be processed
+        plt.pause(0.0001)  # Allow GUI events to be processed
     
         # Print the current step data
         print(f"Step {i}: x = {x[-1]:.3f}, z = {z[-1]:.3f}")
     
-        time.sleep(0.02)  # Sleep for 100 ms between steps
+        # time.sleep(0.001)  # Sleep for 100 ms between steps
 
 # Keep plot open after loop finishes
 plt.ioff()
 plt.show()
-
-if __name__ == "__main__":
-    plot_data_cont()
 

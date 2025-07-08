@@ -97,13 +97,13 @@ GameObject:
   - component: {fileID: 6529735708114265031}
   - component: {fileID: 6645319934695398768}
   - component: {fileID: 441888008279963221}
-  - component: {fileID: 9219320692642276609}
   - component: {fileID: 7081735771137792426}
   - component: {fileID: 3783130376408787828}
   - component: {fileID: 1803348227048255791}
   - component: {fileID: 1764653715286217585}
   - component: {fileID: 8404249312285438026}
   - component: {fileID: 9209674583849767778}
+  - component: {fileID: 749717876643433552}
   m_Layer: 0
   m_Name: RAT_1
   m_TagString: Untagged
@@ -167,20 +167,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f723204076dfa8b46ae18beefb5939cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxLinearVelocity: 10
-  maxAngularVelocity: 5
---- !u!114 &9219320692642276609
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675505943394758802}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b85fca8234da94afb3c986e7a42c4cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  maxLinearVelocity: 5
+  maxAngularVelocity: 2.5
 --- !u!114 &7081735771137792426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -276,6 +264,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   topic: /rat1_teleport
+--- !u!114 &749717876643433552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675505943394758802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b595bb1cf2e7447280f0333383b7547, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /rat1_odom
+  verbose: 1
 --- !u!1 &1815150826476604271
 GameObject:
   m_ObjectHideFlags: 0
