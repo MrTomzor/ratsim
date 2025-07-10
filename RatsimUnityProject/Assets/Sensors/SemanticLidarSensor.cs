@@ -13,8 +13,9 @@ public class SemanticLidarSensor : MonoBehaviour
 
     public bool debugDrawRays = false;
 
-    int numRays;
+    public int numRays;
     RoslikeTCPServer conn;
+    public bool verbose = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -29,6 +30,7 @@ public class SemanticLidarSensor : MonoBehaviour
 
     public void SenseAndPublish(TimerEvent ev)
     {
+        var timestart = Time.realtimeSinceStartup;
         Lidar2DMessage msg = new Lidar2DMessage();
 
         msg.angleIncrementDeg = angleIncrementDeg;
@@ -96,8 +98,14 @@ public class SemanticLidarSensor : MonoBehaviour
         
         }
 
+        var sensedonetime = Time.realtimeSinceStartup;
+
 
         // Publish the message to the specified topic
         conn.Publish(topicName, msg);
+
+        if(verbose){
+            Debug.Log("Sensing time: " + (1000 * (sensedonetime - timestart)) + " ms, pushing time:" + (1000 * (Time.realtimeSinceStartup - sensedonetime)) + " ms");
+        }
     }
 }

@@ -153,12 +153,12 @@ class RoslikeUnityConnector:
         self.last_frame_fps = 1 / dt
         self.last_frame_bw = strlen / dt
 
-        if True:
-            print(f"[Timing] Socket read:      {(readend - readstart):.4f} s")
-            print(f"[Timing] JSON parse:       {(jsonend - readend):.4f} s")
-            print(f"[Timing] Envelope parsing: {(envelopeend - jsonend):.4f} s")
-            print(f"[Timing] Total read:       {(envelopeend - readstart):.4f} s")
-            print("BUFFERLEN: " + str(strlen))
+        # if True:
+        #     print(f"[Timing] Socket read:      {(readend - readstart):.4f} s")
+        #     print(f"[Timing] JSON parse:       {(jsonend - readend):.4f} s")
+        #     print(f"[Timing] Envelope parsing: {(envelopeend - jsonend):.4f} s")
+        #     print(f"[Timing] Total read:       {(envelopeend - readstart):.4f} s")
+        #     print("BUFFERLEN: " + str(strlen))
 
         return 0
 

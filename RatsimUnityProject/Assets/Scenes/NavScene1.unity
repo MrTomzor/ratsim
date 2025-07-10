@@ -616,31 +616,63 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
-      propertyPath: m_Enabled
+      propertyPath: verbose
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
+      propertyPath: topicName
+      value: /lidar2d
+      objectReference: {fileID: 0}
+    - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: angleEndDeg
-      value: 180
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: angleStartDeg
-      value: -180
+      value: -360
       objectReference: {fileID: 0}
     - target: {fileID: 7081735771137792426, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: angleIncrementDeg
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1675505943394758802, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 85795647}
   m_SourcePrefab: {fileID: 100100000, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
 --- !u!1 &85795636 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1675505943394758802, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
   m_PrefabInstance: {fileID: 85795635}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &85795647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 85795636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05267ae5d39a2f06cb04bb9c3ac108e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  angleStartDeg: -180
+  angleEndDeg: 180
+  angleIncrementDeg: 5
+  maxRange: 60
+  descriptorDimension: 3
+  topicName: /lidar2d
+  debugDrawRays: 1
+  numRays: 0
+  verbose: 1
 --- !u!1001 &114002751
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -697,6 +729,10 @@ PrefabInstance:
       propertyPath: trackObject
       value: 
       objectReference: {fileID: 85795636}
+    - target: {fileID: 4212666404655348582, guid: d6a031b061151653592091cb5443a330, type: 3}
+      propertyPath: timingVerbose
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

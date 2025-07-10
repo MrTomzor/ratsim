@@ -17,8 +17,8 @@ if __name__ == "__main__":
     bag = MessageBag(in_bag_filename)
 
     # Add noise models
-    # sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(1))
-    # sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
+    sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(0.001))
+    sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
 
     # First step
     last_obsv = sim.step()

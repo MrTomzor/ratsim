@@ -10,9 +10,11 @@ using UnityEngine.XR;
 using Newtonsoft.Json; // Add Newtonsoft.Json via Unity Package Manager or .dll
 
 
+
 public class RoslikeTCPServer : MonoBehaviour
 {
     public bool verbose = false; // Enable verbose logging
+    public bool timingVerbose = false;
     public float physicsStepTime = 0.02f; // 50Hz
 
     static RoslikeTCPServer instance;
@@ -142,6 +144,7 @@ public class RoslikeTCPServer : MonoBehaviour
     {
         string replyJson = JsonConvert.SerializeObject(new { messages = envelopesToPublish }) + "\n";
         writer.Write(replyJson);
+        writer.Flush();
                                 
         // Clear envelopes for next step
         envelopesToPublish.Clear();
@@ -222,28 +225,33 @@ public class RoslikeTCPServer : MonoBehaviour
         Debug.Log("TCP server started on port 9000");
 
         var client = listener.AcceptTcpClient();
+        client.NoDelay = true;
         Debug.Log("Client connected");
 
         var stream = client.GetStream();
         var reader = new StreamReader(stream, Encoding.UTF8);
-        writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = false };
 
         // Setup core subscribers
         Subscribe<StepRequestMessage>("/sim_control/do_step", StepRequestCallback);
 
         while (client.Connected)
-        {
-            
+        { 
             {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                //var mainloopstart = Time.realtimeSinceStartup;
                 // Read incoming messages
                 var line = reader.ReadLine();
                 if (line == null) continue;
+                var readingDoneTime = stopwatch.Elapsed.TotalSeconds;;
 
                 var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
                 var rawMsgs = wrapper["messages"] as Newtonsoft.Json.Linq.JArray;
 
                 // Deserialize messages
                 receivedMessages = DeserializeMessages(rawMsgs);
+
+                var deserDoneTime = stopwatch.Elapsed.TotalSeconds;
 
                 // Call Unity Update to handle Subs and Pubs in main thread
                 stepIndex++;
@@ -252,6 +260,8 @@ public class RoslikeTCPServer : MonoBehaviour
                 {
                     // Wait for the step to be processed by Update func calls
                 }
+                var updateDoneTime = stopwatch.Elapsed.TotalSeconds;
+
 
                 // Add StepFinishedMessage to envelopes
                 Publish("/sim_control/step_finished",
@@ -259,7 +269,7 @@ public class RoslikeTCPServer : MonoBehaviour
                     {
                         success = true
                     });
-                /*envelopesToPublish.Add(new MessageEnvelope(
+                    /*envelopesToPublish.Add(new MessageEnvelope(
                         topic: "/sim_control/step_finished",
                         type: "StepFinishedMessage",
                         data: new StepFinishedMessage
@@ -270,7 +280,25 @@ public class RoslikeTCPServer : MonoBehaviour
 
                 // Serialize, send and clear envelopes
                 SendAndClearEnvelopes();
+
+                var sendingDoneTime = stopwatch.Elapsed.TotalSeconds;
+
+
+                var mainloopend = stopwatch.Elapsed.TotalSeconds;
+                if (timingVerbose)
+                {
+                    Debug.Log($"[Timing] Total main loop: {mainloopend:F4} seconds");
+                    Debug.Log($"[Timing] Reading time: {readingDoneTime:F4} seconds");
+                    Debug.Log($"[Timing] Deserialization time: {(deserDoneTime - readingDoneTime):F4} seconds");
+                    Debug.Log($"[Timing] Update processing time: {(updateDoneTime - deserDoneTime):F4} seconds");
+                    Debug.Log($"[Timing] Sending time: {(sendingDoneTime - updateDoneTime):F4} seconds");
+                }
             }
+
+          
+
+            
+
             /*catch (Exception e)
             {
                 Debug.LogError("Server loop error: " + e.Message);

@@ -67,6 +67,7 @@ def plot_traj():
 
 def plot_data_cont():
     save_filename = sys.argv[1]
+    skip_factor = int(sys.argv[2]) if len(sys.argv) == 3 else 1
     bag = MessageBag(save_filename)
     
     print("num steps:", len(bag.steps))
@@ -86,6 +87,8 @@ def plot_data_cont():
     ax.legend()
     
     for i, step in enumerate(bag.steps):
+        if not i % skip_factor == 0:
+            continue
         if pose_topic not in step:
             continue
         pose_msg = step[pose_topic][0]
