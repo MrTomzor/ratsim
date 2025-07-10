@@ -26,6 +26,7 @@ class RoslikeUnityConnector:
     def connect(self):
         print("Waiting to connect to Unity...")
         self.sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         while True:
             try:
                 # Attempt to create a socket and connect
@@ -100,6 +101,8 @@ class RoslikeUnityConnector:
         #     if b"\n" in buffer:
         #         break
 
+        readstart = time.time()
+
         self.sock.setblocking(0)
         was_timeout = False
         buffer = b""
@@ -117,9 +120,13 @@ class RoslikeUnityConnector:
 
         if was_timeout:
             return 1
+
+        readend = time.time()
         
 
         response = json.loads(buffer.decode("utf-8-sig").strip())
+
+        jsonend = time.time()
 
         # Convert each message in the response to a MessageEnvelope
         for msg in response["messages"]:
@@ -134,6 +141,8 @@ class RoslikeUnityConnector:
             self.received_messages.append(envelope.data)
             self.receive_messages_topics.append(envelope.topic)
 
+        envelopeend = time.time()
+
         # Calculate FPS and bandwidth
         dt = time.time() - self.msg_sendtime
         
@@ -143,6 +152,13 @@ class RoslikeUnityConnector:
 
         self.last_frame_fps = 1 / dt
         self.last_frame_bw = strlen / dt
+
+        if True:
+            print(f"[Timing] Socket read:      {(readend - readstart):.4f} s")
+            print(f"[Timing] JSON parse:       {(jsonend - readend):.4f} s")
+            print(f"[Timing] Envelope parsing: {(envelopeend - jsonend):.4f} s")
+            print(f"[Timing] Total read:       {(envelopeend - readstart):.4f} s")
+            print("BUFFERLEN: " + str(strlen))
 
         return 0
 

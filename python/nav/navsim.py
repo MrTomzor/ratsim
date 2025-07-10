@@ -1,5 +1,6 @@
 from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
+import time
 
 class NavSim():
     def __init__(self, dont_connect = False):
@@ -22,12 +23,19 @@ class NavSim():
     def step(self, action_dict = {}):
         sim_ended = False
 
+        time_pub_start = time.time()
+
         for topic in action_dict.keys():
             for msg in action_dict[topic]:
                 self.conn.publish(msg, topic)
 
+
         self.conn.send_messages_and_step()
+        time_pub_end = time.time()
+
         was_timeout = self.conn.read_messages_from_unity()
+
+        time_read_end = time.time()
 
         obsv_dict = self.conn.get_all_received_messages_and_topics_dict()
 
@@ -35,6 +43,15 @@ class NavSim():
         obsv_dict = self.apply_noise_models(obsv_dict)
 
         self.num_physics_steps += 1
+
+        time_postprocess_end = time.time()
+
+        # self.verbose_timing = True
+        # if self.verbose_timing:
+        #     print(f"[Timing] Publish+Step: {(time_pub_end - time_pub_start):.4f} s")
+        #     print(f"[Timing] Read from Unity: {(time_read_end - time_pub_end):.4f} s")
+        #     print(f"[Timing] Post-process: {(time_postprocess_end - time_read_end):.4f} s")
+        #     print(f"[Timing] Total step: {(time_postprocess_end - time_pub_start):.4f} s")
 
         return obsv_dict, was_timeout
 
