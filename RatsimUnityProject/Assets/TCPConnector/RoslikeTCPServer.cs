@@ -188,9 +188,6 @@ public class RoslikeTCPServer : MonoBehaviour
     public uint physicsStepIndex { get; private set; } = 0;
 
 
-    public GameObject trackObject;
-    int trackpos = 0;
-
     void Update()
     {
         if (stepRequested)
@@ -208,7 +205,6 @@ public class RoslikeTCPServer : MonoBehaviour
                 physicsStepIndex++;
                 Physics.Simulate(physicsStepTime);
             }
-            trackpos = (int)trackObject.transform.position.y;
 
             // Handle Publishers and Timers
             HandleTimers(1, physicsStepTime);

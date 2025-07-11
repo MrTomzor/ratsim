@@ -130,7 +130,7 @@ def plot_data_cont():
         all_z = np.array(z)
         
         # Compute bounds with margin
-        margin = 100.0  # You can tweak this
+        margin = 1000.0  # You can tweak this
         x_min, x_max = np.min(all_x) - margin, np.max(all_x) + margin
         z_min, z_max = np.min(all_z) - margin, np.max(all_z) + margin
         

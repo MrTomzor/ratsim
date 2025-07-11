@@ -17,10 +17,11 @@ if __name__ == "__main__":
     bag = MessageBag(in_bag_filename)
 
     # Add noise models
-    sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(0.001))
-    sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
+    # sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(0.001))
+    # sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
 
     # First step
+    sim_start_time = time.time()
     last_obsv = sim.step()
     
     # Teleporting and sensing
@@ -52,4 +53,9 @@ if __name__ == "__main__":
     print("num steps: " + str(len(bag2.steps)))
     bag2.save_to_file(out_bag_filename)
     print("saved")
+
+    # Print total time and seconds per steps
+    sim_end_time = time.time()
+    print("Total time: " + str(sim_end_time - sim_start_time) + " seconds")
+    print("Seconds per step: " + str((sim_end_time - sim_start_time) / len(bag2.steps)))
 
