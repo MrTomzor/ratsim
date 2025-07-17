@@ -1,7 +1,7 @@
 import yaml
 import numpy as np
 
-from roslike_unity_connector.message_definitions import Twist2DMessage
+from ratsim.roslike_unity_connector.message_definitions import Twist2DMessage
 
 class NavTask:
     def __init__(self, start_position, start_rotation_deg_clockwise, goal_position, max_distance_from_goal, max_steps):

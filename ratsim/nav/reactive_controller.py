@@ -1,5 +1,5 @@
-from roslike_unity_connector.connector import *
-from roslike_unity_connector.message_definitions import *
+from ratsim.roslike_unity_connector.connector import *
+from ratsim.roslike_unity_connector.message_definitions import *
 import numpy as np
 # TODO - fix relative imports
 

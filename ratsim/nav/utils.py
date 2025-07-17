@@ -46,6 +46,7 @@ def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
     valid_ranges = ranges[valid_mask]
     valid_angles = angles[valid_mask]
 
+    # Flip angles to match Unity's coordinate system
     valid_angles = -valid_angles
 
     forward = valid_ranges * np.cos(valid_angles)

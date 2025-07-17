@@ -52,7 +52,7 @@ if __name__ == "__main__":
     print("traj replayed, saving full bag")
     print("num steps: " + str(len(bag2.steps)))
     bag2.save_to_file(out_bag_filename)
-    print("saved")
+    print("saved to file: " + out_bag_filename)
 
     # Print total time and seconds per steps
     sim_end_time = time.time()

@@ -1,5 +1,6 @@
-from roslike_unity_connector.connector import *
-from roslike_unity_connector.message_definitions import *
+from ratsim.roslike_unity_connector.connector import *
+from ratsim.roslike_unity_connector.message_definitions import *
+
 import time
 
 class NavSim():

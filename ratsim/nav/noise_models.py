@@ -1,4 +1,4 @@
-from roslike_unity_connector.message_definitions import *
+from ratsim.roslike_unity_connector.message_definitions import *
 import numpy as np
 import copy
 
