@@ -51,17 +51,41 @@ def plot_traj():
     z = []
     x = []
     pose_topic = "/rat1_pose"
+    pose_topic2 = "/rat1_pose_noised"
+
+    noised_z = []
+    noised_x = []
+
+    dif = 0 
 
     for step in bag.steps:
-        if not pose_topic in step.keys():
-            continue
-        pose_msg = step[pose_topic][0]
-        z.append(pose_msg.forward)
-        x.append(-pose_msg.left)
-        # print(step)
-    plt.plot(x, z)
-    plt.xlabel("x (unity)")
-    plt.ylabel("z (unity)")
+        if pose_topic in step.keys():
+            pose_msg = step[pose_topic][0]
+            z.append(pose_msg.forward)
+            x.append(-pose_msg.left)
+
+        if pose_topic2 in step.keys():
+            pose_msg2 = step[pose_topic2][0]
+            noised_z.append(pose_msg2.forward)
+            noised_x.append(-pose_msg2.left)
+
+        if pose_topic in step.keys() and pose_topic2 in step.keys():
+            pose_msg = step[pose_topic][0]
+            pose_msg2 = step[pose_topic2][0]
+            dist = np.linalg.norm(np.array([pose_msg.forward, -pose_msg.left]) - np.array([pose_msg2.forward, -pose_msg2.left]))
+            dif += dist
+
+    print("Average difference between poses: " + str(dif / len(bag.steps)))
+
+    # plt.plot(x, z)
+    # plt.xlabel("x (unity)")
+    # plt.ylabel("z (unity)")
+
+    plt.plot(x, z, label="Pose")
+    plt.plot(noised_x, noised_z, label="Noised Pose", linestyle='--')
+    plt.legend()
+
+
     plt.gca().set_aspect("equal")
     plt.show()
 

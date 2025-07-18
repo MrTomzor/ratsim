@@ -1,3 +1,4 @@
+from re import M
 from ratsim.roslike_unity_connector.message_definitions import *
 import numpy as np
 import copy
@@ -7,7 +8,7 @@ class NoiseModel:
         self.msg_type = None
         pass
 
-    def apply_noise(self, msg ):
+    def apply_noise(self, msg, do_deepcopy=False):
         return msg
 
 class LidarGaussianNoiseInverseDist(NoiseModel):
@@ -15,7 +16,7 @@ class LidarGaussianNoiseInverseDist(NoiseModel):
         super().__init__()
         self.sigma_inv_distances = sigma_inv_distances
 
-    def apply_noise(self, msg: Lidar2DMessage):
+    def apply_noise(self, msg: Lidar2DMessage, do_deepcopy = False):
         ranges = np.array(msg.ranges)
 
         # Avoid division by zero (or inf), mask out zero or inf values temporarily
@@ -36,8 +37,61 @@ class LidarGaussianNoiseInverseDist(NoiseModel):
         # Optionally, you might want to clamp to max lidar range or set invalids to a default
         # For example: noisy_ranges[~valid_noisy] = float('inf') or max_range
 
-        msg.ranges = noisy_ranges.tolist()
-        return msg
+        out_msg = copy.deepcopy(msg) if do_deepcopy else msg
+
+        out_msg.ranges = noisy_ranges.tolist()
+        return out_msg
+
+
+class Odom2DGaussianNoiseCumulativeAbsolute(NoiseModel):
+    def __init__(self, sigma_forward, sigma_left, sigma_radians, bias1, bias2, bias3) -> None:
+        super().__init__()
+        self.sigma_forward = sigma_forward
+        self.sigma_left = sigma_left 
+        self.sigma_radians = sigma_radians 
+
+        self.bias_forward = bias1
+        self.bias_left = bias2
+        self.bias_radians = bias3
+
+        self.cum_error = Twist2DMessage(0, 0, 0)
+        self.last_pose_msg = None
+
+    def apply_noise(self, msg: Twist2DMessage, do_deepcopy = False):
+        # TODO - have the noise sigmas be RELATIVE to the current rotation
+
+        delta_forward = msg.forward - self.last_pose_msg.forward if self.last_pose_msg else 0
+        delta_left = msg.left - self.last_pose_msg.left if self.last_pose_msg else 0
+        delta_rotation = msg.radiansCounterClockwise - self.last_pose_msg.radiansCounterClockwise if self.last_pose_msg else 0
+
+
+        self.last_pose_msg = copy.deepcopy(msg)
+
+        # Modify the rotation to be within [-pi, pi]
+        delta_rotation = (delta_rotation + np.pi) % (2 * np.pi) - np.pi
+
+
+        # Apply Gaussian noise and bias, only if the values are non-zero
+        fwd_noise = abs(delta_forward) * (np.random.normal(0, self.sigma_forward) + self.bias_forward)
+        left_noise = abs(delta_left) * (np.random.normal(0, self.sigma_left) + self.bias_left)
+        rot_noise = abs(delta_rotation) * (np.random.normal(0, self.sigma_radians) + self.bias_radians)
+
+        self.cum_error.forward += fwd_noise
+        self.cum_error.left += left_noise
+        self.cum_error.radiansCounterClockwise += rot_noise
+
+        print(f"Applying noise: forward={fwd_noise}, left={left_noise}, rotation={rot_noise}")
+        print(f"Cumulative error: forward={self.cum_error.forward}, left={self.cum_error.left}, rotation={self.cum_error.radiansCounterClockwise}")
+
+        out_msg = copy.deepcopy(msg) if do_deepcopy else msg
+
+        out_msg.forward = msg.forward + self.cum_error.forward
+        out_msg.left = msg.left + self.cum_error.left
+        out_msg.radiansCounterClockwise = msg.radiansCounterClockwise + self.cum_error.radiansCounterClockwise
+
+        
+
+        return out_msg
 
 
 class Odom2DGaussianNoise(NoiseModel):
@@ -51,7 +105,7 @@ class Odom2DGaussianNoise(NoiseModel):
         self.bias_left = bias2
         self.bias_radians = bias3
 
-    def apply_noise(self, msg: Twist2DMessage):
+    def apply_noise(self, msg: Twist2DMessage, do_deepcopy = False):
         forward = msg.forward
         left = msg.left
         rotation = msg.radiansCounterClockwise
@@ -62,8 +116,9 @@ class Odom2DGaussianNoise(NoiseModel):
         noisy_rotation = rotation + np.random.normal(0, self.sigma_radians) + self.bias_radians
 
         # Update message
-        msg.forward = noisy_forward
-        msg.left = noisy_left
-        msg.radiansCounterClockwise = noisy_rotation
+        out_msg = copy.deepcopy(msg) if do_deepcopy else msg
+        out_msg.forward = noisy_forward
+        out_msg.left = noisy_left
+        out_msg.radiansCounterClockwise = noisy_rotation
 
         return msg

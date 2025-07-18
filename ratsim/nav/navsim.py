@@ -8,6 +8,7 @@ class NavSim():
         self.step_time = 0.1
         self.num_physics_steps = 0
         self.noise_models = {}
+        self.noise_models_out_topics = {}
 
         if not dont_connect:
             self.conn = RoslikeUnityConnector(verbose=False)
@@ -56,14 +57,28 @@ class NavSim():
 
         return obsv_dict, was_timeout
 
-    def add_noise_model(self, topic, model):
+    def add_noise_model(self, topic, model, new_topic = None):
         self.noise_models[topic] = model
+        self.noise_models_out_topics[topic] = new_topic if new_topic else topic
 
     def apply_noise_models(self, msgs_dict):
+        # Create empty array for each out topic that is not already in the dict
+        for out_topic in self.noise_models_out_topics.values():
+            if out_topic not in msgs_dict.keys():
+                msgs_dict[out_topic] = []
+
         for topic in msgs_dict.keys():
             if topic in self.noise_models.keys():
-                for i in range(len(msgs_dict[topic])):
-                    msgs_dict[topic][i] = self.noise_models[topic].apply_noise(msgs_dict[topic][i])
+                out_topic = self.noise_models_out_topics[topic]
+
+                # Modify the message if output=input topic, but add noised message on new topic if output is different
+                if out_topic != topic: 
+                    for i in range(len(msgs_dict[topic])):
+                        noisy_msg = self.noise_models[topic].apply_noise(msgs_dict[topic][i], do_deepcopy = True)
+                        msgs_dict[out_topic].append(noisy_msg)
+                else:
+                    for i in range(len(msgs_dict[topic])):
+                        msgs_dict[topic][i] = self.noise_models[topic].apply_noise(msgs_dict[topic][i])
 
         return msgs_dict
 

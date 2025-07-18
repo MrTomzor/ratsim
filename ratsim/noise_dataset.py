@@ -21,7 +21,9 @@ if __name__ == "__main__":
     # Add noise models
     # sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(0.001))
     sim.add_noise_model("/lidar2d", LidarGaussianNoiseInverseDist(0.0003))
-    sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
+    # sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
+    # sim.add_noise_model("/rat1_pose", Odom2DGaussianNoiseCumulativeAbsolute(0.3, 0.5, 1, 0, 0, 0), new_topic="/rat1_pose_noised")
+    sim.add_noise_model("/rat1_pose", Odom2DGaussianNoiseCumulativeAbsolute(1, 1, 1, 1, 0, 0), new_topic="/rat1_pose_noised")
 
     pose_topic = "/rat1_pose"
     for step in bag.steps:
