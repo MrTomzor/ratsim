@@ -51,6 +51,13 @@ class Lidar2DMessage(Message):
         self.maxRange = maxRange
 
 
+class VisualPointTrackerMessage(Message):
+    def __init__(self, trackedPointsEgocentricFLU: List[float] = None, trackedPointDescriptors: List[float] = None, scaleFactor: float = None):
+        self.trackedPointsEgocentricFLU = trackedPointsEgocentricFLU
+        self.trackedPointDescriptors = trackedPointDescriptors
+        self.scaleFactor = scaleFactor
+
+
 class Twist2DMessage(Message):
     def __init__(self, forward: float = None, left: float = None, radiansCounterClockwise: float = None):
         self.forward = forward
@@ -77,6 +84,8 @@ MESSAGE_TYPE_REGISTRY = {
     "BoolMessage": BoolMessage,
 
     "Lidar2DMessage": Lidar2DMessage,
+
+    "VisualPointTrackerMessage": VisualPointTrackerMessage,
 
     "Twist2DMessage": Twist2DMessage,
 

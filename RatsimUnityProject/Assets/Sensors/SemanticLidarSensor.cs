@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SemanticLidarSensor : MonoBehaviour
@@ -28,6 +30,40 @@ public class SemanticLidarSensor : MonoBehaviour
 
     }
 
+    public static List<Tuple<float, float[]>> GetRangesAndDescriptorsByCasting(Vector3 start, List<Vector3> worldDirections, float maxRange, bool debugDrawRays = false)
+    {
+        List<Tuple<float, float[]>> res = new List<Tuple<float, float[]>>();
+
+        foreach (var dir in worldDirections)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(start, dir, out hit, maxRange))
+            {
+                float distance = hit.distance;
+                SemanticObject semanticObject = hit.collider.GetComponent<SemanticObject>();
+                float[] descriptor = semanticObject != null ? semanticObject.GetDescriptor(hit.point) : new float[3];
+
+                res.Add(new Tuple<float, float[]>(distance, descriptor));
+                if (debugDrawRays)
+                {
+                    Debug.DrawLine(start, hit.point, Color.red, 0);
+                }
+            }
+            else
+            {
+                res.Add(new Tuple<float, float[]>(-1, new float[3]));
+                if (debugDrawRays)
+                {
+                    Debug.DrawLine(start, start + dir * maxRange, Color.red, 0);
+                }
+            }
+
+            
+        }
+
+        return res;
+    }
+
     public void SenseAndPublish(TimerEvent ev)
     {
         var timestart = Time.realtimeSinceStartup;
@@ -41,7 +77,7 @@ public class SemanticLidarSensor : MonoBehaviour
         msg.descriptors = new float[numRays * descriptorDimension];
 
         // Cast rays in 2D starting from angleStartDeg to angleEndDeg
-        int numhit = 0;
+        List<Vector3> worldDirections = new List<Vector3>();
         for (int i = 0; i < numRays; i++)
         {
             float angle = angleStartDeg + i * angleIncrementDeg;
@@ -50,6 +86,8 @@ public class SemanticLidarSensor : MonoBehaviour
             // Cast a ray in the specified direction
             Vector3 dirvec = new Vector3(Mathf.Sin(radians), 0, Mathf.Cos(radians));
             dirvec = transform.TransformDirection(dirvec);
+            worldDirections.Add(dirvec);
+            /*
             RaycastHit hit;
             Physics.Raycast(transform.position, dirvec, out hit, maxRange);
 
@@ -91,13 +129,17 @@ public class SemanticLidarSensor : MonoBehaviour
             {
                 Debug.DrawLine(transform.position, transform.position + dirvec * (msg.ranges[i] < 0 ? maxRange : msg.ranges[i]), Color.red, 0);
 
-            }
+            }*/
         }
-        if (debugDrawRays)
-        {
-            //Debug.Log("ranges: " + string.Join(", ", msg.ranges));
-            //Debug.Log("num hits: " + numhit);
         
+        var sensed = GetRangesAndDescriptorsByCasting(transform.position, worldDirections, maxRange, debugDrawRays);
+        for (int i = 0; i < numRays; i++)
+        {
+            msg.ranges[i] = sensed[i].Item1;
+            for (uint j = 0; j < descriptorDimension; j++)
+            {
+                msg.descriptors[i * descriptorDimension + j] = sensed[i].Item2[j];
+            }
         }
 
         var sensedonetime = Time.realtimeSinceStartup;
@@ -106,7 +148,8 @@ public class SemanticLidarSensor : MonoBehaviour
         // Publish the message to the specified topic
         conn.Publish(topicName, msg);
 
-        if(verbose){
+        if (verbose)
+        {
             Debug.Log("Sensing time: " + (1000 * (sensedonetime - timestart)) + " ms, pushing time:" + (1000 * (Time.realtimeSinceStartup - sensedonetime)) + " ms");
         }
     }

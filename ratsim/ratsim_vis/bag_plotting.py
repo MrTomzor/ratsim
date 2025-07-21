@@ -101,6 +101,7 @@ def plot_data_cont():
     x = []
     pose_topic = "/rat1_pose"
     lidar_topic = "/lidar2d"
+    visual_tracker_topic = "/visual_point_track_pcl"
     
     plt.ion()  # Turn on interactive mode
     fig, ax = plt.subplots()
@@ -149,6 +150,28 @@ def plot_data_cont():
                 print(lidar_x.shape)
                 print(lidar_z.shape)
                 print(rgb_colors.shape)
+                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=3, label="Lidar")
+
+        elif visual_tracker_topic in step:
+            print("visual msg!")
+            visual_msg = step[visual_tracker_topic][0]
+            pcl, descriptors = visual_tracker_msg_to_pointcloud3d(visual_msg)
+            pcl_world = transform_pointcloud2d(pcl[:, :2], pose_msg)
+            rgb_colors = descriptors
+
+            # Plot transformed lidar points
+            if pcl_world.size > 0:
+                print("aa msg!")
+                lidar_x = -pcl_world[:, 1]
+                lidar_z = pcl_world[:, 0]
+                # lidar_x = pcl_world[:, 0]
+                # lidar_z = pcl_world[:, 1]
+
+                lidar_scatter.remove()
+                lidar_scatter.set_offsets(np.c_[lidar_x, lidar_z])
+                # print(lidar_x.shape)
+                # print(lidar_z.shape)
+                # print(rgb_colors.shape)
                 lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=3, label="Lidar")
 
         # Update plot data

@@ -33,6 +33,16 @@ def getLidarValidMask(ranges: np.ndarray, max_range: float) -> np.ndarray:
         valid_mask &= (ranges <= max_range)
     return valid_mask
 
+def visual_tracker_msg_to_pointcloud3d(msg: VisualPointTrackerMessage):
+    if not msg.trackedPointsEgocentricFLU: 
+        return np.empty((0, 3))  # Return empty array if input is invalid
+    num_pts = int(len(msg.trackedPointsEgocentricFLU) / 3)
+    points = np.array(msg.trackedPointsEgocentricFLU).reshape((num_pts, 3))
+    descriptor_dimension = int(len(msg.trackedPointDescriptors) / num_pts )
+    descriptors = np.array(msg.trackedPointDescriptors).reshape((num_pts, descriptor_dimension))
+
+    return points, descriptors  # Shape: (N, 3), (N, D)
+
 def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
     if not lidar_msg.ranges or lidar_msg.angleIncrementDeg is None or lidar_msg.angleStartDeg is None:
         return np.empty((0, 2))  # Return empty array if input is invalid

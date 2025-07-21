@@ -44,6 +44,13 @@ public class Lidar2DMessage : Message
     public float maxRange { get; set; }
 }
 
+public class VisualPointTrackerMessage : Message
+{
+    public float[] trackedPointsEgocentricFLU { get; set; }
+    public float[] trackedPointDescriptors { get; set; }
+    public float scaleFactor { get; set; }
+}
+
 public class Twist2DMessage : Message
 {
     public float forward { get; set; }
