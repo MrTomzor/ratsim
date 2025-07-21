@@ -76,9 +76,11 @@ class NavSim():
                     for i in range(len(msgs_dict[topic])):
                         noisy_msg = self.noise_models[topic].apply_noise(msgs_dict[topic][i], do_deepcopy = True)
                         msgs_dict[out_topic].append(noisy_msg)
+                        print(f"Adding noise to {topic} -> {out_topic}")
                 else:
                     for i in range(len(msgs_dict[topic])):
                         msgs_dict[topic][i] = self.noise_models[topic].apply_noise(msgs_dict[topic][i])
+                        print(f"Adding noise to {topic} -> {out_topic}")
 
         return msgs_dict
 

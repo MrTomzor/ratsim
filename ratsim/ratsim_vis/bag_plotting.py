@@ -105,7 +105,7 @@ def plot_data_cont():
     
     plt.ion()  # Turn on interactive mode
     fig, ax = plt.subplots()
-    line, = ax.plot([], [], 'bo-')  # Blue circles with lines
+    line, = ax.plot([], [], '-')  # Blue circles with lines
     lidar_scatter = ax.scatter([], [], c='r', s=3, label="Lidar")  # Lidar points
     ax.set_xlabel("x (unity)")
     ax.set_ylabel("z (unity)")
@@ -123,7 +123,7 @@ def plot_data_cont():
     
         # Draw lidar msg
         rgb_colors = "r"
-        if lidar_topic in step:
+        if lidar_topic in step and len(step[lidar_topic]) > 0:
             print("lidar msg!")
             lidar_msg = step[lidar_topic][0]
             pcl = lidar2d_to_pointcloud(lidar_msg)
@@ -172,7 +172,7 @@ def plot_data_cont():
                 # print(lidar_x.shape)
                 # print(lidar_z.shape)
                 # print(rgb_colors.shape)
-                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=3, label="Lidar")
+                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=5, label="Lidar")
 
         # Update plot data
         line.set_xdata(x)

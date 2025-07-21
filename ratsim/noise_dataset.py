@@ -24,6 +24,7 @@ if __name__ == "__main__":
     # sim.add_noise_model("/rat1_odom", Odom2DGaussianNoise(0.1, 0.1, 0.1, 1, 0, 0))
     # sim.add_noise_model("/rat1_pose", Odom2DGaussianNoiseCumulativeAbsolute(0.3, 0.5, 1, 0, 0, 0), new_topic="/rat1_pose_noised")
     sim.add_noise_model("/rat1_pose", Odom2DGaussianNoiseCumulativeAbsolute(1, 1, 1, 1, 0, 0), new_topic="/rat1_pose_noised")
+    sim.add_noise_model("/visual_point_track_pcl", VisualTrackerNoiseGaussianInverseDist(0.0006))
 
     pose_topic = "/rat1_pose"
     for step in bag.steps:

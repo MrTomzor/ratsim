@@ -350,11 +350,13 @@ MonoBehaviour:
   debugDrawRays: 1
   verbose: 1
   maxRange: 500
-  conn: {fileID: 0}
+  topicName: /visual_point_track_pcl
   maxTrackedPoints: 100
   horizontalFovDegrees: 180
   verticalFovDegrees: 90
+  pointLosingDist: 1
   trackedPoints: []
+  descriptorDimension: 3
 --- !u!1 &746223339
 GameObject:
   m_ObjectHideFlags: 0
@@ -591,6 +593,7 @@ GameObject:
   - component: {fileID: 1040730066}
   - component: {fileID: 1040730065}
   - component: {fileID: 1040730064}
+  - component: {fileID: 1040730068}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -643,7 +646,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: b8b52445ab8a5ebae9964409a739c22a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -688,6 +691,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1040730068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1040730063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6824d3d4016a954888e675f91b8eb8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  color: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1001 &1065518168
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -702,11 +718,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1675505943394758802, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_Name
-      value: RAT_1
+      value: AGENT_1
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1302.894
+      value: 1043.1
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -714,7 +730,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 984.74744
+      value: 555.2
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalRotation.w
