@@ -7,7 +7,7 @@ public class SemanticObject : MonoBehaviour
         return 1;
     }
 
-    public virtual float[] GetDescriptor()
+    public virtual float[] GetDescriptor(Vector3 worldPos)
     {
         return new float[] { 0 };
     }

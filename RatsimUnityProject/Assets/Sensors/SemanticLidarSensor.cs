@@ -55,6 +55,7 @@ public class SemanticLidarSensor : MonoBehaviour
 
             if (hit.collider != null)
             {
+                Debug.Log(hit.collider.gameObject.name);
                 msg.ranges[i] = hit.distance;
                 numhit++;
 
@@ -62,10 +63,11 @@ public class SemanticLidarSensor : MonoBehaviour
                 SemanticObject semanticObject = hit.collider.GetComponent<SemanticObject>();
                 if (semanticObject != null)
                 {
+                    Debug.Log("Found semantic object: " + semanticObject.name);
                     uint dim = semanticObject.GetDescriptorDimension();
                     for (uint j = 0; j < dim; j++)
                     {
-                        msg.descriptors[i * dim + j] = semanticObject.GetDescriptor()[j];
+                        msg.descriptors[i * dim + j] = semanticObject.GetDescriptor(hit.point)[j];
                     }
                 }
                 else

@@ -11,7 +11,7 @@ public class ColorSemanticObject : SemanticObject
     }
 
     // Override the GetDescriptor method to return the color as an array of floats
-    public override float[] GetDescriptor()
+    public override float[] GetDescriptor(Vector3 worldPos)
     {
         return new float[] { color.r, color.g, color.b };
     }

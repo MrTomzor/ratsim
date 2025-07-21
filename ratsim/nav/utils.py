@@ -27,6 +27,12 @@ def transform_pointcloud2d(points: np.ndarray, pose: Twist2DMessage) -> np.ndarr
 
     return translated
 
+def getLidarValidMask(ranges: np.ndarray, max_range: float) -> np.ndarray:
+    valid_mask = ranges > 0
+    if max_range is not None:
+        valid_mask &= (ranges <= max_range)
+    return valid_mask
+
 def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
     if not lidar_msg.ranges or lidar_msg.angleIncrementDeg is None or lidar_msg.angleStartDeg is None:
         return np.empty((0, 2))  # Return empty array if input is invalid
@@ -39,9 +45,7 @@ def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
 
     # Filter out invalid ranges (e.g. None or greater than maxRange)
     # valid_mask = np.isfinite(ranges)
-    valid_mask = ranges > 0
-    if lidar_msg.maxRange is not None:
-        valid_mask &= (ranges <= lidar_msg.maxRange)
+    valid_mask = getLidarValidMask(ranges, lidar_msg.maxRange)
 
     valid_ranges = ranges[valid_mask]
     valid_angles = angles[valid_mask]

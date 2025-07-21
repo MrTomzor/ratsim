@@ -91,7 +91,8 @@ def plot_traj():
 
 def plot_data_cont():
     save_filename = sys.argv[1]
-    skip_factor = int(sys.argv[2]) if len(sys.argv) == 3 else 1
+    skip_factor = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
+    margin = int(sys.argv[3]) if len(sys.argv) >= 4 else 200
     bag = MessageBag(save_filename)
     
     print("num steps:", len(bag.steps))
@@ -120,11 +121,18 @@ def plot_data_cont():
         x.append(-pose_msg.left)
     
         # Draw lidar msg
+        rgb_colors = "r"
         if lidar_topic in step:
             print("lidar msg!")
             lidar_msg = step[lidar_topic][0]
             pcl = lidar2d_to_pointcloud(lidar_msg)
             pcl_world = transform_pointcloud2d(pcl, pose_msg)
+            colors = lidar_msg.descriptors #is list of lists with 3 elements each
+            rgb_colors = np.array(colors).reshape(-1, 3)
+            valid_mask = getLidarValidMask(np.array(lidar_msg.ranges), lidar_msg.maxRange)
+            rgb_colors = rgb_colors[valid_mask]
+            print(colors)
+
             # pcl_world = pcl
 
             # Plot transformed lidar points
@@ -135,7 +143,13 @@ def plot_data_cont():
                 # lidar_z = pcl_world[:, 1]
                 lidar_x = -pcl_world[:, 1]
                 lidar_z = pcl_world[:, 0]
+
+                lidar_scatter.remove()
                 lidar_scatter.set_offsets(np.c_[lidar_x, lidar_z])
+                print(lidar_x.shape)
+                print(lidar_z.shape)
+                print(rgb_colors.shape)
+                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=3, label="Lidar")
 
         # Update plot data
         line.set_xdata(x)
@@ -154,7 +168,6 @@ def plot_data_cont():
         all_z = np.array(z)
         
         # Compute bounds with margin
-        margin = 1000.0  # You can tweak this
         x_min, x_max = np.min(all_x) - margin, np.max(all_x) + margin
         z_min, z_max = np.min(all_z) - margin, np.max(all_z) + margin
         
