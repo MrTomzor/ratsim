@@ -94,6 +94,8 @@ def plot_data_cont():
     skip_factor = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
     margin = int(sys.argv[3]) if len(sys.argv) >= 4 else 200
     bag = MessageBag(save_filename)
+    lidar_size = int(5 * margin / 100)
+    lidar_size = max(lidar_size, 1)  # Ensure minimum size for visibility
     
     print("num steps:", len(bag.steps))
     
@@ -150,7 +152,7 @@ def plot_data_cont():
                 print(lidar_x.shape)
                 print(lidar_z.shape)
                 print(rgb_colors.shape)
-                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=3, label="Lidar")
+                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=lidar_size, label="Lidar")
 
         elif visual_tracker_topic in step:
             print("visual msg!")
@@ -172,7 +174,7 @@ def plot_data_cont():
                 # print(lidar_x.shape)
                 # print(lidar_z.shape)
                 # print(rgb_colors.shape)
-                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=5, label="Lidar")
+                lidar_scatter = ax.scatter(lidar_x, lidar_z, c=rgb_colors, s=lidar_size, label="Lidar")
 
         # Update plot data
         line.set_xdata(x)
