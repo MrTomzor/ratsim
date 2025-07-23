@@ -65,6 +65,25 @@ class Twist2DMessage(Message):
         self.radiansCounterClockwise = radiansCounterClockwise
 
 
+class RGBDMessage(Message):
+    def __init__(self, rgbImageBase64: str = None, depthImageBase64: str = None):
+        self.rgbImageBase64 = rgbImageBase64
+        self.depthImageBase64 = depthImageBase64
+
+
+class CameraIntrinsicsMessage(Message):
+    def __init__(self, imageWidth: int = None, imageHeight: int = None, fx: float = None, fy: float = None, cx: float = None, cy: float = None, nearClip: float = None, farClip: float = None, verticalFOV: float = None):
+        self.imageWidth = imageWidth
+        self.imageHeight = imageHeight
+        self.fx = fx
+        self.fy = fy
+        self.cx = cx
+        self.cy = cy
+        self.nearClip = nearClip
+        self.farClip = farClip
+        self.verticalFOV = verticalFOV
+
+
 
 
 MESSAGE_TYPE_REGISTRY = {
@@ -88,5 +107,9 @@ MESSAGE_TYPE_REGISTRY = {
     "VisualPointTrackerMessage": VisualPointTrackerMessage,
 
     "Twist2DMessage": Twist2DMessage,
+
+    "RGBDMessage": RGBDMessage,
+
+    "CameraIntrinsicsMessage": CameraIntrinsicsMessage,
 
 }

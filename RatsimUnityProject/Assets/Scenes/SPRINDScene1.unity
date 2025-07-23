@@ -354,7 +354,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   debugDrawRays: 1
   verbose: 1
-  maxRange: 500
+  maxRange: 1000
   topicName: /visual_point_track_pcl
   maxTrackedPoints: 100
   horizontalFovDegrees: 180

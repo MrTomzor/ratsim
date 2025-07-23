@@ -30,6 +30,8 @@ public class MessageRegistry
         { "Twist2DMessage", typeof(Twist2DMessage) },
         { "Float32Message", typeof(Float32Message) },
         { "BoolMessage", typeof(BoolMessage)},
-        { "VisualPointTrackerMessage", typeof(VisualPointTrackerMessage) }
+        { "VisualPointTrackerMessage", typeof(VisualPointTrackerMessage) },
+        { "RGBDMessage", typeof(RGBDMessage) },
+        { "CameraIntrinsicsMessage", typeof(CameraIntrinsicsMessage) }
     };
 }

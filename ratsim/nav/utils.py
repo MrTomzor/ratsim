@@ -3,6 +3,15 @@ from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
 from nav.reactive_controller import *
 from nav.noise_models import *
+import io
+import base64
+import numpy as np
+from PIL import Image
+import io
+import matplotlib.pyplot as plt
+# import cv2
+import tempfile
+import imageio.v3 as iio
 
 def transform_pointcloud2d(points: np.ndarray, pose: Twist2DMessage) -> np.ndarray:
     if points.size == 0:
@@ -67,3 +76,67 @@ def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
     left = valid_ranges * np.sin(valid_angles)
 
     return np.stack((forward, left), axis=-1)  # Shape: (N, 2)
+
+# def decode_exr_from_base64(base64_str: str) -> np.ndarray:
+#     exr_bytes = base64.b64decode(base64_str)
+#     with tempfile.NamedTemporaryFile(suffix=".exr") as f:
+#         f.write(exr_bytes)
+#         f.flush()
+#         depth_img = iio.imread(f.name)  # returns float32
+
+#     if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
+#         return depth_img[:, :, 0]  # use red channel
+#     return depth_img
+
+# def decode_exr_from_base64(base64_str: str) -> np.ndarray:
+#     exr_bytes = base64.b64decode(base64_str)
+#     f = io.BytesIO(exr_bytes)
+#     depth_img = iio.imread(f, format='exr')  # reads directly from bytes
+
+#     # If multichannel, extract first channel (usually depth in R)
+#     if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
+#         depth_img = depth_img[:, :, 0]
+
+#     return depth_img
+def decode_exr_from_base64(base64_str: str) -> np.ndarray:
+    exr_bytes = base64.b64decode(base64_str)
+    f = io.BytesIO(exr_bytes)
+    depth_img = iio.imread(f)  # autodetect EXR from bytes
+
+    if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
+        depth_img = depth_img[:, :, 0]  # extract first channel
+
+    return depth_img
+
+def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
+    print("MSG:")
+    print(msg)
+
+    # Decode RGB image
+    rgb_bytes = base64.b64decode(msg.rgbImageBase64)
+    rgb_image = Image.open(io.BytesIO(rgb_bytes)).convert("RGB")
+    rgb_np = np.array(rgb_image)
+
+    # Decode Depth image
+    depth_bytes = base64.b64decode(msg.depthImageBase64)
+    # depth_image = Image.open(io.BytesIO(depth_bytes)).convert("I")  # "I" = 32-bit integer pixels
+    # depth_image = iio.imread(io.BytesIO(depth_bytes), extension=".exr") 
+    depth_image = decode_exr_from_base64(msg.depthImageBase64)
+    depth_np = np.array(depth_image)
+    print("Min depth:", np.min(depth_np.flatten()), "Max depth:", np.max(depth_np.flatten()))
+
+    if visualize:
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+        axs[0].imshow(rgb_np)
+        axs[0].set_title("RGB Image")
+        axs[0].axis("off")
+
+        im = axs[1].imshow(depth_np, cmap='gray')
+        axs[1].set_title("Depth Image")
+        axs[1].axis("off")
+        plt.colorbar(im, ax=axs[1], shrink=0.6)
+
+        plt.tight_layout()
+        plt.show()
+
+    return rgb_np, depth_np

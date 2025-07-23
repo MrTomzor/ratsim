@@ -94,7 +94,7 @@ def plot_data_cont():
     skip_factor = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
     margin = int(sys.argv[3]) if len(sys.argv) >= 4 else 200
     bag = MessageBag(save_filename)
-    lidar_size = int(5 * margin / 100)
+    lidar_size = int(6 * margin / 100)
     lidar_size = max(lidar_size, 1)  # Ensure minimum size for visibility
     
     print("num steps:", len(bag.steps))

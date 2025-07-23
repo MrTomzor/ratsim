@@ -57,3 +57,24 @@ public class Twist2DMessage : Message
     public float left { get; set; }
     public float radiansCounterClockwise { get; set; }
 }
+
+public class RGBDMessage : Message
+{
+    public string rgbImageBase64 { get; set; }
+    public string depthImageBase64 { get; set; }
+}
+
+public class CameraIntrinsicsMessage : Message
+{
+    public int imageWidth { get; set; }
+    public int imageHeight { get; set; }
+    
+    public float fx { get; set; }  // focal length in pixels (x-axis)
+    public float fy { get; set; }  // focal length in pixels (y-axis)
+    public float cx { get; set; }  // principal point x
+    public float cy { get; set; }  // principal point y
+
+    public float nearClip { get; set; }
+    public float farClip { get; set; }
+    public float verticalFOV { get; set; }
+}

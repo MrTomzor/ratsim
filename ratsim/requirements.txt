@@ -3,3 +3,4 @@ torch
 stable_baselines3
 matplotlib
 pyyaml
+imageio
