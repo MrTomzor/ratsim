@@ -90,42 +90,80 @@ class Odom2DGaussianNoiseCumulativeAbsolute(NoiseModel):
         self.bias_left = bias2
         self.bias_radians = bias3
 
-        self.cum_error = Twist2DMessage(0, 0, 0)
+        # self.cum_error = Twist2DMessage(0, 0, 0)
+        self.noised_pose = Twist2DMessage(0, 0, 0)
         self.last_pose_msg = None
 
     def apply_noise(self, msg: Twist2DMessage, do_deepcopy = False):
         # TODO - have the noise sigmas be RELATIVE to the current rotation
+        if self.last_pose_msg is None:
+            self.last_pose_msg = copy.deepcopy(msg)
+            self.noised_pose = copy.deepcopy(msg)
+            out_msg = copy.deepcopy(msg) if do_deepcopy else msg
+            print("FIrst msg:")
+            print(f"forward: {out_msg.forward}, left: {out_msg.left}, radiansCounterClockwise: {out_msg.radiansCounterClockwise}")
+            return out_msg
 
-        delta_forward = msg.forward - self.last_pose_msg.forward if self.last_pose_msg else 0
-        delta_left = msg.left - self.last_pose_msg.left if self.last_pose_msg else 0
+        delta_forward_world = msg.forward - self.last_pose_msg.forward if self.last_pose_msg else 0
+        delta_left_world = msg.left - self.last_pose_msg.left if self.last_pose_msg else 0
         delta_rotation = msg.radiansCounterClockwise - self.last_pose_msg.radiansCounterClockwise if self.last_pose_msg else 0
 
+        # Convert deltas to local frame using the last pose's rotation
+        cos_theta = np.cos(self.last_pose_msg.radiansCounterClockwise)
+        sin_theta = np.sin(self.last_pose_msg.radiansCounterClockwise)
 
+        # These are like the "unnoised wheel measurements" in the local frame
+        delta_forward_local = (cos_theta * delta_forward_world + sin_theta * delta_left_world)
+        delta_left_local = (-sin_theta * delta_forward_world + cos_theta * delta_left_world)
+        if delta_forward_local != 0 or delta_left_local != 0 or delta_rotation != 0:
+            print(f"delta_forward_local: {delta_forward_local}, delta_left_local: {delta_left_local}, delta_rotation: {delta_rotation}")
+        else:
+            print("No change in pose, skipping noise application.")
+
+        # save the last pose message
         self.last_pose_msg = copy.deepcopy(msg)
 
         # Modify the rotation to be within [-pi, pi]
         delta_rotation = (delta_rotation + np.pi) % (2 * np.pi) - np.pi
 
-
         # Apply Gaussian noise and bias, only if the values are non-zero
-        fwd_noise = abs(delta_forward) * (np.random.normal(0, self.sigma_forward) + self.bias_forward)
-        left_noise = abs(delta_left) * (np.random.normal(0, self.sigma_left) + self.bias_left)
-        rot_noise = abs(delta_rotation) * (np.random.normal(0, self.sigma_radians) + self.bias_radians)
+        fwd_noise_local = np.random.normal(0, self.sigma_forward) + self.bias_forward if delta_forward_local != 0 else 0
+        left_noise_local = np.random.normal(0, self.sigma_left) + self.bias_left if delta_left_local != 0 else 0
+        rot_noise_local = np.random.normal(0, self.sigma_radians) + self.bias_radians if delta_rotation != 0 else 0
 
-        self.cum_error.forward += fwd_noise
-        self.cum_error.left += left_noise
-        self.cum_error.radiansCounterClockwise += rot_noise
+        noised_delta_forward = delta_forward_local + fwd_noise_local
+        noised_delta_left = delta_left_local + left_noise_local
+        noised_delta_rotation = delta_rotation + rot_noise_local
 
-        print(f"Applying noise: forward={fwd_noise}, left={left_noise}, rotation={rot_noise}")
-        print(f"Cumulative error: forward={self.cum_error.forward}, left={self.cum_error.left}, rotation={self.cum_error.radiansCounterClockwise}")
+        corrupted_cos_theta = np.cos(-self.noised_pose.radiansCounterClockwise)
+        corrupted_sin_theta = np.sin(-self.noised_pose.radiansCounterClockwise)
+
+        noised_delta_forward_world = (corrupted_cos_theta * noised_delta_forward + corrupted_sin_theta * noised_delta_left)
+        noised_delta_left_world = (-corrupted_sin_theta * noised_delta_forward + corrupted_cos_theta * noised_delta_left)
+
+        self.noised_pose.forward += noised_delta_forward_world
+        self.noised_pose.left += noised_delta_left_world
+        self.noised_pose.radiansCounterClockwise = self.noised_pose.radiansCounterClockwise + noised_delta_rotation        # self.noised_pose.radiansCounterClockwise = (self.noised_pose.radiansCounterClockwise + noised_delta_rotation + np.pi) % (2 * np.pi) - np.pi
+
+        # new_noised_pose.forward = self.noised_pose.forward + delta_forward_local + fwd_noise
+        
+
+
+
+        # self.cum_error.forward += fwd_noise
+        # self.cum_error.left += left_noise
+        # self.cum_error.radiansCounterClockwise += rot_noise
+
 
         out_msg = copy.deepcopy(msg) if do_deepcopy else msg
 
-        out_msg.forward = msg.forward + self.cum_error.forward
-        out_msg.left = msg.left + self.cum_error.left
-        out_msg.radiansCounterClockwise = msg.radiansCounterClockwise + self.cum_error.radiansCounterClockwise
+        # out_msg.forward = msg.forward + self.cum_error.forward
+        # out_msg.left = msg.left + self.cum_error.left
+        # out_msg.radiansCounterClockwise = msg.radiansCounterClockwise + self.cum_error.radiansCounterClockwise
 
-        
+        out_msg.forward = self.noised_pose.forward
+        out_msg.left = self.noised_pose.left
+        out_msg.radiansCounterClockwise = self.noised_pose.radiansCounterClockwise
 
         return out_msg
 
