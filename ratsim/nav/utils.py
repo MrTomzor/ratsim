@@ -10,8 +10,6 @@ from PIL import Image
 import io
 import matplotlib.pyplot as plt
 # import cv2
-import tempfile
-import imageio.v3 as iio
 
 def transform_pointcloud2d(points: np.ndarray, pose: Twist2DMessage) -> np.ndarray:
     if points.size == 0:
@@ -76,37 +74,6 @@ def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
     left = valid_ranges * np.sin(valid_angles)
 
     return np.stack((forward, left), axis=-1)  # Shape: (N, 2)
-
-# def decode_exr_from_base64(base64_str: str) -> np.ndarray:
-#     exr_bytes = base64.b64decode(base64_str)
-#     with tempfile.NamedTemporaryFile(suffix=".exr") as f:
-#         f.write(exr_bytes)
-#         f.flush()
-#         depth_img = iio.imread(f.name)  # returns float32
-
-#     if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
-#         return depth_img[:, :, 0]  # use red channel
-#     return depth_img
-
-# def decode_exr_from_base64(base64_str: str) -> np.ndarray:
-#     exr_bytes = base64.b64decode(base64_str)
-#     f = io.BytesIO(exr_bytes)
-#     depth_img = iio.imread(f, format='exr')  # reads directly from bytes
-
-#     # If multichannel, extract first channel (usually depth in R)
-#     if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
-#         depth_img = depth_img[:, :, 0]
-
-#     return depth_img
-def decode_exr_from_base64(base64_str: str) -> np.ndarray:
-    exr_bytes = base64.b64decode(base64_str)
-    f = io.BytesIO(exr_bytes)
-    depth_img = iio.imread(f)  # autodetect EXR from bytes
-
-    if depth_img.ndim == 3 and depth_img.shape[2] >= 1:
-        depth_img = depth_img[:, :, 0]  # extract first channel
-
-    return depth_img
 
 def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
     print("MSG:")
