@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
         if rgbd_topic in last_obsv:
             rgbdmsg = last_obsv[rgbd_topic][0]
-            # convertRGBDMessageToNumpyFormat(rgbdmsg, visualize=False)
-        lidarmsg = last_obsv["/lidar2d"]
+            convertRGBDMessageToNumpyFormat(rgbdmsg, visualize=True)
+        # lidarmsg = last_obsv["/lidar2d"]
 
         print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
         sim.conn.log_connection_stats()

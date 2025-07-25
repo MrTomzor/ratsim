@@ -66,9 +66,11 @@ class Twist2DMessage(Message):
 
 
 class RGBDMessage(Message):
-    def __init__(self, rgbImageBase64: str = None, depthImageBase64: str = None):
+    def __init__(self, rgbImageBase64: str = None, depthImageBase64: str = None, minDepth: float = None, maxDepth: float = None):
         self.rgbImageBase64 = rgbImageBase64
         self.depthImageBase64 = depthImageBase64
+        self.minDepth = minDepth
+        self.maxDepth = maxDepth
 
 
 class CameraIntrinsicsMessage(Message):

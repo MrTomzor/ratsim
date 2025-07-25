@@ -117,13 +117,18 @@ def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
     rgb_image = Image.open(io.BytesIO(rgb_bytes)).convert("RGB")
     rgb_np = np.array(rgb_image)
 
-    # Decode Depth image
+    # Decode 8-bit grayscale depth image
+    print("MSg reported min and max depth:", msg.minDepth, msg.maxDepth)
     depth_bytes = base64.b64decode(msg.depthImageBase64)
-    # depth_image = Image.open(io.BytesIO(depth_bytes)).convert("I")  # "I" = 32-bit integer pixels
-    # depth_image = iio.imread(io.BytesIO(depth_bytes), extension=".exr") 
-    depth_image = decode_exr_from_base64(msg.depthImageBase64)
-    depth_np = np.array(depth_image)
-    print("Min depth:", np.min(depth_np.flatten()), "Max depth:", np.max(depth_np.flatten()))
+    # depth_image = Image.open(io.BytesIO(depth_bytes)).convert("L")  # 'L' = 8-bit grayscale
+    # depth_np = np.array(depth_image)
+    # print("depth img min and max:", np.min(depth_np), np.max(depth_np))
+
+    depth_image = Image.open(io.BytesIO(depth_bytes)).convert("RGBA")
+    alpha = np.array(depth_image)[:, :, 3].astype(np.float32) / 255.0
+    depth_np = msg.minDepth + (msg.maxDepth - msg.minDepth) * alpha
+
+    print("Decoded Depth Range:", np.min(depth_np), np.max(depth_np))
 
     if visualize:
         fig, axs = plt.subplots(1, 2, figsize=(12, 5))
@@ -132,7 +137,7 @@ def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
         axs[0].axis("off")
 
         im = axs[1].imshow(depth_np, cmap='gray')
-        axs[1].set_title("Depth Image")
+        axs[1].set_title("Depth Image (meters)")
         axs[1].axis("off")
         plt.colorbar(im, ax=axs[1], shrink=0.6)
 

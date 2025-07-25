@@ -12,6 +12,7 @@ public class RGBDSensor : MonoBehaviour
 
     public int imageWidth = 640;
     public int imageHeight = 480;
+    public float depthImageMaxRange = 100.0f; // Maximum range for depth sensor
     RoslikeTCPServer conn;
 
 
@@ -47,7 +48,7 @@ public class RGBDSensor : MonoBehaviour
         //Texture2D depthTex = CaptureDepth(cam);
         Texture2D depthTex = CaptureDepthLinear(cam);
         //string depthBase64 = Convert.ToBase64String(depthTex.EncodeToPNG());
-        string depthBase64 = Convert.ToBase64String(depthTex.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
+        //string depthBase64 = Convert.ToBase64String(depthTex.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
 
 
         float[] depthValues = GetFloatValuesFromTexture(depthTex);
@@ -55,6 +56,10 @@ public class RGBDSensor : MonoBehaviour
         // Compute min/max
         float minDepth = float.MaxValue;
         float maxDepth = float.MinValue;
+        if(maxDepth > depthImageMaxRange){
+            maxDepth = depthImageMaxRange; // Clamp to max range
+        }
+
 
         foreach (float d in depthValues)
         {
@@ -66,20 +71,69 @@ public class RGBDSensor : MonoBehaviour
         }
 
         Debug.Log("Min depth: " + minDepth + ", Max depth: " + maxDepth);
+        // TODO normalize depth values to send as PNG
+        // Create a normalized depth texture
+        Texture2D depthTexNormalized = CreateNormalizedDepthPNG(depthValues, minDepth, maxDepth);
+        string depthBase64 = Convert.ToBase64String(depthTexNormalized.EncodeToPNG());
+
+        float[] depthValuesNormalized = GetFloatValuesFromTexture(depthTexNormalized);
+
+        // Compute min/max
+        float minDepthNormalized = float.MaxValue;
+        float maxDepthNormalized = float.MinValue;
+
+        foreach (float d in depthValuesNormalized)
+        {
+            if (d > 0.0001f) // avoid zero or garbage values
+            {
+                if (d < minDepthNormalized) minDepthNormalized = d;
+                if (d > maxDepthNormalized) maxDepthNormalized = d;
+            }
+        }
+        Debug.Log("Normalized Min depth: " + minDepthNormalized + ", Max depth: " + maxDepthNormalized);
 
         // Clean up
         UnityEngine.Object.Destroy(rgbTex);
         UnityEngine.Object.Destroy(depthTex);
+        UnityEngine.Object.Destroy(depthTexNormalized);
 
         // Create and return message
         var msg = new RGBDMessage
         {
             rgbImageBase64 = rgbBase64,
+            minDepth = minDepth,
+            maxDepth = maxDepth,
             depthImageBase64 = depthBase64
         };
 
         conn.Publish(rgbdTopic, msg);
     }
+
+    Texture2D CreateNormalizedDepthPNG(float[] depthValues, float minDepth, float maxDepth)
+    {
+        //Texture2D depthPNG = new Texture2D(imageWidth, imageHeight, TextureFormat.Alpha8, false);
+        Texture2D depthPNG = new Texture2D(imageWidth, imageHeight, TextureFormat.RGBA32, false);
+        Color[] pixels = new Color[depthValues.Length];
+
+        float range = maxDepth - minDepth;
+
+        for (int i = 0; i < depthValues.Length; i++)
+        {
+            float norm = 0f;
+            if (depthValues[i] > 0.0001f)
+            {
+                norm = Mathf.Clamp01((depthValues[i] - minDepth) / range);
+
+            }
+            byte val = (byte)(norm * 255f);
+            pixels[i] = new Color32(0, 0, 0, val); // Store in alpha channel
+        }
+
+        depthPNG.SetPixels(pixels);
+        depthPNG.Apply();
+        return depthPNG;
+    }
+
     
     Texture2D CaptureCamera(Camera cam)
     {

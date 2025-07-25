@@ -62,6 +62,8 @@ public class RGBDMessage : Message
 {
     public string rgbImageBase64 { get; set; }
     public string depthImageBase64 { get; set; }
+    public float minDepth { get; set; }
+    public float maxDepth { get; set; }
 }
 
 public class CameraIntrinsicsMessage : Message
