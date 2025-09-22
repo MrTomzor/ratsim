@@ -86,6 +86,18 @@ class CameraIntrinsicsMessage(Message):
         self.verticalFOV = verticalFOV
 
 
+class MapGenTemplate2D(Message):
+    def __init__(self, width: int = None, height: int = None, meters_per_pixel: float = None, obstacles: List[int] = None, spawnMask: List[int] = None, poiMask: List[int] = None, forbiddenMask: List[int] = None, growableMask: List[int] = None):
+        self.width = width
+        self.height = height
+        self.meters_per_pixel = meters_per_pixel
+        self.obstacles = obstacles
+        self.spawnMask = spawnMask
+        self.poiMask = poiMask
+        self.forbiddenMask = forbiddenMask
+        self.growableMask = growableMask
+
+
 
 
 MESSAGE_TYPE_REGISTRY = {
@@ -113,5 +125,7 @@ MESSAGE_TYPE_REGISTRY = {
     "RGBDMessage": RGBDMessage,
 
     "CameraIntrinsicsMessage": CameraIntrinsicsMessage,
+
+    "MapGenTemplate2D": MapGenTemplate2D,
 
 }

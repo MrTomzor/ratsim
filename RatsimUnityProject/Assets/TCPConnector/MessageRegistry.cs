@@ -32,6 +32,7 @@ public class MessageRegistry
         { "BoolMessage", typeof(BoolMessage)},
         { "VisualPointTrackerMessage", typeof(VisualPointTrackerMessage) },
         { "RGBDMessage", typeof(RGBDMessage) },
-        { "CameraIntrinsicsMessage", typeof(CameraIntrinsicsMessage) }
+        { "CameraIntrinsicsMessage", typeof(CameraIntrinsicsMessage) },
+        { "MapGenTemplate2D", typeof(MapGenTemplate2D)}
     };
 }
