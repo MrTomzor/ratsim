@@ -3,11 +3,11 @@ from roslike_unity_connector.connector import *
 from roslike_unity_connector.message_definitions import *
 from roslike_unity_connector.bag import *
 from nav.reactive_controller import *
-from nav.navtrial import *
+from nav.navbenchmark import *
 
 if __name__ == "__main__":
     trialfolder = "./trials/blackenv1_trial1/"
-    trial = NavTrial.from_folder(trialfolder)
+    trial = NavBenchmark.from_folder(trialfolder)
     print("Num tasks: " + str(len(trial.tasks)))
 
     for bag_fname in trial.bag_files:

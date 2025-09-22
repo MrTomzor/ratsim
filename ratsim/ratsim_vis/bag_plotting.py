@@ -142,8 +142,6 @@ def plot_data_cont():
             if pcl_world.size > 0:
                 print("aa msg!")
                 # Split into x and z (remember: z is forward)
-                # lidar_x = pcl_world[:, 0]
-                # lidar_z = pcl_world[:, 1]
                 lidar_x = -pcl_world[:, 1]
                 lidar_z = pcl_world[:, 0]
 
