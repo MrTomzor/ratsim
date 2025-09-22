@@ -2,6 +2,7 @@ from ratsim.roslike_unity_connector.connector import *
 from ratsim.roslike_unity_connector.message_definitions import *
 from ratsim.nav.utils import *
 import numpy as np
+import math
 # TODO - fix relative imports
 
 
@@ -76,7 +77,7 @@ class OccupancyMapperSliding2D:
         else:
             self.map_center_odomframe = np.array(pos_odomframe)
 
-        self.map = self.map * 0.99
+        # self.map = self.map * 0.99
 
         # Map is centered on current position
         # points are in odom origin
@@ -92,9 +93,31 @@ class OccupancyMapperSliding2D:
         points_xy_mapcells = ((points_xy_mapframe + half_width) / self.resolution).astype(np.int32)
         
         # Handle all points
-        for pt in points_xy_mapcells:
+        # for pt in points_xy_mapcells:
+        for i in range(points_xy_mapcells.shape[0]):
+
+            pt = points_xy_mapcells[i]
+            cont_pt = points_xy_mapframe[i]
+
             map_x = pt[0] 
             map_y = pt[1] 
+
+            # Free space carving
+            raystart_x = (self.map.shape[1] + 0.5 * np.sign(cont_pt[1])) // 2
+            raystart_y = (self.map.shape[0] + 0.5 * np.sign(cont_pt[0])) // 2
+
+
+            ray = bresenham(int(raystart_x), int(raystart_y), int(map_x), int(map_y))
+            for rx, ry in ray[:-1]:  # skip the last cell (occupied one)
+                if 0 <= rx < self.map.shape[1] and 0 <= ry < self.map.shape[0]:
+                    if self.map[ry, rx] < 0.5:
+                        self.map[ry, rx] = 0.5
+
+            # ray = line_to_cells(raystart_x, raystart_y, map_x, map_y, 1)
+            # for coord in ray[:-1]:  # skip the last cell (occupied one)
+            #     rx, ry = coord
+            #     if 0 <= rx < self.map.shape[1] and 0 <= ry < self.map.shape[0]:
+            #         self.map[ry, rx] = -1
 
             # Set cell to occupied if in bounds
             if 0 <= map_x < self.map.shape[1] and 0 <= map_y < self.map.shape[0]:
@@ -146,3 +169,80 @@ class OccupancyMapperSliding2D:
 
         img.set_data(vismap)
         plt.pause(0.001)# # #}
+
+def bresenham(x0, y0, x1, y1):
+    """Yield integer coordinates on the line from (x0, y0) to (x1, y1).
+
+    Input coordinates should be integers.
+
+    The result will contain both the start and the end point.
+    """
+    res = []
+
+    dx = x1 - x0
+    dy = y1 - y0
+
+    xsign = 1 if dx > 0 else -1
+    ysign = 1 if dy > 0 else -1
+
+    dx = abs(dx)
+    dy = abs(dy)
+
+    if dx > dy:
+        xx, xy, yx, yy = xsign, 0, 0, ysign
+    else:
+        dx, dy = dy, dx
+        xx, xy, yx, yy = 0, ysign, xsign, 0
+
+    D = 2*dy - dx
+    y = 0
+
+    for x in range(dx + 1):
+        # yield x0 + x*xx + y*yx, y0 + x*xy + y*yy
+        res.append((x0 + x*xx + y*yx, y0 + x*xy + y*yy))
+        if D >= 0:
+            y += 1
+            D -= 2*dx
+        D += 2*dy
+
+    return res
+
+
+def line_to_cells(x0, y0, x1, y1, resolution):
+    # Convert to grid space
+    x0 /= resolution
+    y0 /= resolution
+    x1 /= resolution
+    y1 /= resolution
+
+    # Current cell
+    ix, iy = math.floor(x0), math.floor(y0)
+    ix1, iy1 = math.floor(x1), math.floor(y1)
+
+    cells = [(ix, iy)]
+
+    # Direction
+    dx = x1 - x0
+    dy = y1 - y0
+
+    step_x = 1 if dx > 0 else -1
+    step_y = 1 if dy > 0 else -1
+
+    # Avoid div by zero
+    t_max_x = (math.floor(x0) + (1 if dx > 0 else 0) - x0) / dx if dx != 0 else float("inf")
+    t_max_y = (math.floor(y0) + (1 if dy > 0 else 0) - y0) / dy if dy != 0 else float("inf")
+
+    t_delta_x = abs(1 / dx) if dx != 0 else float("inf")
+    t_delta_y = abs(1 / dy) if dy != 0 else float("inf")
+
+    # Traverse grid
+    while (ix, iy) != (ix1, iy1):
+        if t_max_x < t_max_y:
+            ix += step_x
+            t_max_x += t_delta_x
+        else:
+            iy += step_y
+            t_max_y += t_delta_y
+        cells.append((ix, iy))
+
+    return cells
