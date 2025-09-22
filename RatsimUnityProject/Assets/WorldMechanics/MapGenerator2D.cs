@@ -11,7 +11,7 @@ public class MapGenerator2D : MonoBehaviour
 
     Vector3 mapPixelToWorldPos(int x, int y)
     {
-        return new Vector3((x - width/2.0f) * meters_per_pixel, 0, (y - height/2.0f) * meters_per_pixel);
+        return new Vector3((x - width/2.0f) * meters_per_pixel, 0, -(y - height/2.0f) * meters_per_pixel);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created

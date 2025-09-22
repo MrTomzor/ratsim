@@ -38,9 +38,9 @@ if __name__ == "__main__":
         if lidar_topic in last_obsv and pose_topic in last_obsv:
             mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
 
-            # if step_count % 20 == 0:
-            #     # mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
-            #     mapper.visualize_map_dynamic()
+            if step_count % 20 == 0:
+                # mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
+                mapper.visualize_map_dynamic()
 
         print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
         sim.conn.log_connection_stats()
