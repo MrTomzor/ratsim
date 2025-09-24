@@ -11,6 +11,7 @@ class MapGenTemplate():
         if root_path != "":
             self.load_from_root_path(root_path)
         self.meters_per_pixel = meters_per_pixel
+        self.mapshape = None
 
     def load_from_root_path(self, root_path, spawn_idx=1, poi_idx=1, forbidden_idx=1, growable_idx=1):
         print(f"loading map template from {root_path}")
@@ -20,15 +21,20 @@ class MapGenTemplate():
         def load_mask(file_name: str) -> np.ndarray:
             file_path = os.path.join(root_path, file_name)
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"Missing required mask: {file_path}")
+                # raise FileNotFoundError(f"Missing required mask: {file_path}")
+                print(f"Missing required mask: {file_path}")
+                # return np.zeros(self.mapshape, dtype=bool)
+                return self.obstacles  # return obstacles as fallback
 
             img = Image.open(file_path).convert("RGBA")  # ensure RGBA
             arr = np.array(img)  # shape (H, W, 4)
+
+            self.mapshape = arr.shape[:2]  # (H, W)
             alpha = arr[:, :, 3]  # extract alpha channel
             return alpha > 0  # binary mask
 
         # always load obstacles
-        self.obstacles       = load_mask("obstacles.png")
+        self.obstacles       = load_mask("obstacles.png") # Should always exist
         # load indexed masks
         self.spawn_mask      = load_mask(f"spawn{spawn_idx}.png")
         self.poi_mask        = load_mask(f"poi{poi_idx}.png")

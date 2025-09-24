@@ -490,6 +490,11 @@ MonoBehaviour:
   topicName: /mapgen
   obstacleHeight: 3
   obstaclePrefab: {fileID: 7549939628177536415, guid: ece169ae5cbb4d9f9a0732e72ea7e69c, type: 3}
+  playerObject: {fileID: 85795636}
+  playerChunkX: 0
+  playerChunkY: 0
+  playerSensingRange: 100
+  chunkSize: 50
 --- !u!4 &832895815
 Transform:
   m_ObjectHideFlags: 0

@@ -5,6 +5,7 @@ import time
 from .message_definitions import *
 from .message_envelope import *
 import select
+import selectors
 
 
 class RoslikeUnityConnector:
@@ -21,12 +22,17 @@ class RoslikeUnityConnector:
         self.receive_messages_topics = []
 
         self.timeout_seconds = 1
+
+        self.send_buffer = b""
+
         pass
 
     def connect(self):
         print("Waiting to connect to Unity...")
         self.sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        self.sock.setblocking(0)
         while True:
             try:
                 # Attempt to create a socket and connect
@@ -36,6 +42,9 @@ class RoslikeUnityConnector:
                 print(f"Could not connect: {e}. Retrying in 1 second...")
                 time.sleep(1)
         
+
+        self.selector = selectors.DefaultSelector()
+        self.selector.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ)
         
         print("connected")
 
@@ -69,6 +78,22 @@ class RoslikeUnityConnector:
         self.queued_messages.append(message)
         self.queued_messages_topics.append(topic)
 
+    def queue_message(self, msg: str):
+        msg_bytes = (msg + "\n").encode("utf-8")
+        self.send_buffer += msg_bytes
+    
+    def flush_send(self):
+        try:
+            if self.send_buffer:
+                print("Flushing send buffer of size: " + str(len(self.send_buffer)))
+                sent = self.sock.send(self.send_buffer)
+                print("Sent bytes: " + str(sent))
+                self.send_buffer = self.send_buffer[sent:]
+        except BlockingIOError:
+            # Socket not ready, try again later
+            pass
+
+
     def send_messages_and_step(self, enable_physics_step: bool = True):
         
         # Always send a step request message
@@ -77,11 +102,19 @@ class RoslikeUnityConnector:
         
         # Pack and send the queued messages
         outbound_json = self.pack_messages_to_json(self.queued_messages, self.queued_messages_topics)
-        self.sock.sendall(outbound_json.encode("utf-8"))
+        # outbound_json += "\n"  # Ensure newline termination
+        out_str = outbound_json.encode('utf-8')
+        self.send_buffer += out_str
+        print("Outbound JSON size: " + str(len(out_str)))
+        # self.sock.sendall(out_str)
 
-        if self.verbose:
-            print(f"Sent {len(self.queued_messages)} messages to Unity.")
-
+        while self.send_buffer:
+            events = self.selector.select(timeout=1)
+            for key, mask in events:
+                if mask & selectors.EVENT_WRITE:
+                    self.flush_send()
+        print("All data sent.")
+        
         # Clear the queued messages
         self.queued_messages.clear()
         self.queued_messages_topics.clear()
@@ -103,22 +136,46 @@ class RoslikeUnityConnector:
 
         readstart = time.time()
 
-        self.sock.setblocking(0)
         was_timeout = False
         buffer = b""
         while True:
-            chunk = None
-            ready = select.select([self.sock], [], [], self.timeout_seconds)
-            if ready[0]:
-                chunk = self.sock.recv(4096)
-            else:
+            # Use selector.select() instead of select.select
+            events = self.selector.select(timeout=self.timeout_seconds)
+            if not events:
+                # Timeout occurred
                 was_timeout = True
                 break
-            buffer += chunk
-            if b"\n" in buffer:
-                break
+        
+            for key, mask in events:
+                if mask & selectors.EVENT_READ:
+                    chunk = key.fileobj.recv(4096)
+                    if not chunk:
+                        # Remote closed the socket
+                        was_timeout = True
+                        break
+                    buffer += chunk
+                    if b"\n" in buffer:
+                        break
+            else:
+                # Continue while loop if inner break not triggered
+                continue
+            # Inner break triggered
+            break
+
+        # while True:
+        #     chunk = None
+        #     ready = select.select([self.sock], [], [], self.timeout_seconds)
+        #     if ready[0]:
+        #         chunk = self.sock.recv(4096)
+        #     else:
+        #         was_timeout = True
+        #         break
+        #     buffer += chunk
+        #     if b"\n" in buffer:
+        #         break
 
         if was_timeout:
+            print("Timeout waiting for data from Unity.")
             return 1
 
         readend = time.time()

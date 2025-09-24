@@ -239,9 +239,42 @@ public class RoslikeTCPServer : MonoBehaviour
                 // Read incoming messages
                 var line = reader.ReadLine();
                 if (line == null) continue;
-                var readingDoneTime = stopwatch.Elapsed.TotalSeconds;;
+                var readingDoneTime = stopwatch.Elapsed.TotalSeconds;
 
-                var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+                Debug.Log("Received data len: " + line.Length);
+
+                // try to parse the outer wrapper
+                //var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+                Dictionary<string, object> wrapper = null;
+                wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+
+                /*while (true)
+                {
+                    try
+                    {
+                        wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+                        if (wrapper == null || !wrapper.ContainsKey("messages"))
+                        {
+                            Debug.LogWarning("Received invalid message wrapper");
+                            continue;
+                        }
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning("Failed to parse message wrapper: " + e.Message);
+                        var newline = reader.ReadLine();
+                        if (newline != null)
+                        {
+                            Debug.Log("Appending next line to current buffer");
+                            line += "\n" + newline;
+                        }
+
+                        // READ MORE LINES UNTIL A FULL MESSAGE IS RECEIVED
+                        continue;
+                    }
+                }*/
+
                 var rawMsgs = wrapper["messages"] as Newtonsoft.Json.Linq.JArray;
 
                 // Deserialize messages

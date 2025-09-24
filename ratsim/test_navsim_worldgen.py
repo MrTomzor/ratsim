@@ -9,16 +9,25 @@ from nav.map_generation import *
 
 if __name__ == "__main__":
 
-    mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/temeslike/", meters_per_pixel=2)
+    # mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/temeslike/", meters_per_pixel=2)
+    # mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/miniscale/", meters_per_pixel=2)
+    mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/gigascale/", meters_per_pixel=2)
+    mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/ultrascale/", meters_per_pixel=2)
+    # print("MapGenTemplate created")
+    # print(mapgentemplate.obstacles)
+    # print(np.sum(mapgentemplate.obstacles.flatten()))
     # mapgentemplate.visualize()
     mapgenmsg = mapgentemplate.to_ratsim_msg()
+    # print(mapgenmsg)
     mapgentopic = "/mapgen"
 
     sim = NavSim()
     
     # First step
     # last_obsv, done = sim.step()
+    # sim.conn.sock.setblocking(True)
     last_obsv, done = sim.step({mapgentopic: [mapgenmsg]})
+    # sim.conn.sock.setblocking(False)
 
     # rgbd_topic = "/rgbd"
     lidar_topic = "/lidar2d"
