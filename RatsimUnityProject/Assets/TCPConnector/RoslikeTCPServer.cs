@@ -241,39 +241,20 @@ public class RoslikeTCPServer : MonoBehaviour
                 if (line == null) continue;
                 var readingDoneTime = stopwatch.Elapsed.TotalSeconds;
 
-                Debug.Log("Received data len: " + line.Length);
+                //Debug.Log("Received data len: " + line.Length);
 
                 // try to parse the outer wrapper
                 //var wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
                 Dictionary<string, object> wrapper = null;
-                wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
-
-                /*while (true)
+                try
                 {
-                    try
-                    {
-                        wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
-                        if (wrapper == null || !wrapper.ContainsKey("messages"))
-                        {
-                            Debug.LogWarning("Received invalid message wrapper");
-                            continue;
-                        }
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogWarning("Failed to parse message wrapper: " + e.Message);
-                        var newline = reader.ReadLine();
-                        if (newline != null)
-                        {
-                            Debug.Log("Appending next line to current buffer");
-                            line += "\n" + newline;
-                        }
-
-                        // READ MORE LINES UNTIL A FULL MESSAGE IS RECEIVED
-                        continue;
-                    }
-                }*/
+                    wrapper = JsonConvert.DeserializeObject<Dictionary<string, object>>(line);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("Failed to parse message wrapper: " + e.Message);
+                    continue;
+                }
 
                 var rawMsgs = wrapper["messages"] as Newtonsoft.Json.Linq.JArray;
 

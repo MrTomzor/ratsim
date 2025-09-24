@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     # mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/temeslike/", meters_per_pixel=2)
     # mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/miniscale/", meters_per_pixel=2)
-    mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/gigascale/", meters_per_pixel=2)
+    # mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/gigascale/", meters_per_pixel=2)
     mapgentemplate = MapGenTemplate("/home/tom/git/ratsim/unity_maps/ultrascale/", meters_per_pixel=2)
     # print("MapGenTemplate created")
     # print(mapgentemplate.obstacles)

@@ -85,9 +85,9 @@ class RoslikeUnityConnector:
     def flush_send(self):
         try:
             if self.send_buffer:
-                print("Flushing send buffer of size: " + str(len(self.send_buffer)))
+                # print("Flushing send buffer of size: " + str(len(self.send_buffer)))
                 sent = self.sock.send(self.send_buffer)
-                print("Sent bytes: " + str(sent))
+                # print("Sent bytes: " + str(sent))
                 self.send_buffer = self.send_buffer[sent:]
         except BlockingIOError:
             # Socket not ready, try again later
@@ -105,7 +105,11 @@ class RoslikeUnityConnector:
         # outbound_json += "\n"  # Ensure newline termination
         out_str = outbound_json.encode('utf-8')
         self.send_buffer += out_str
-        print("Outbound JSON size: " + str(len(out_str)))
+        msglen = len(out_str)
+        bigmsg = msglen > 10000
+        if bigmsg:
+            print(f"Sending big msg - {msglen} bytes to Unity.")
+        # print("Outbound JSON size: " + str(len(out_str)))
         # self.sock.sendall(out_str)
 
         while self.send_buffer:
@@ -113,7 +117,8 @@ class RoslikeUnityConnector:
             for key, mask in events:
                 if mask & selectors.EVENT_WRITE:
                     self.flush_send()
-        print("All data sent.")
+        if bigmsg:
+            print("All data sent.")
         
         # Clear the queued messages
         self.queued_messages.clear()
