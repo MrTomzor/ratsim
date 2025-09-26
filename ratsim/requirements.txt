@@ -1,6 +1,5 @@
-gymnasium==1.0.0
 torch
-stable_baselines3
-matplotlib
-pyyaml
-imageio
+torchvision
+scipy
+opencv-python
+scikit-learn
