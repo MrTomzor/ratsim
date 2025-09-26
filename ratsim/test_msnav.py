@@ -9,8 +9,68 @@ from nav.map_generation import *
 
 from msnav.monolith import *
 
+
+def rotation_matrix_from_rot_around_z(theta):# # #{
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c, -s, 0],
+                     [s, c, 0],
+                     [0, 0, 1]])
+# # #}
+
+class VirtualPclPreprocessor:# # #{
+    def __init__(self, update_distance_threshold=1.0, occupied_height = 5):
+        self.last_pop_pose = None
+        self.last_input_pose = None
+        self.ready_to_pop = False
+        self.update_distance_threshold = update_distance_threshold
+        self.occupied_height = occupied_height
+        self.last_occupancy_map = None
+        self.last_occupancy_map_odom_center = None
+        pass
+
+    def update_occupancy_map_and_center(self, occupancy_map, map_center_odomframe):
+        self.last_occupancy_map = occupancy_map
+        self.last_occupancy_map_odom_center = map_center_odomframe
+
+    def update_uav_pose_odomframe(self, robotpose):
+        self.last_input_pose = robotpose
+
+        # Update the flag for computing pcl data
+        if self.last_pop_pose is not None:
+            # Calculate translation and rotation between the last pose and the current pose
+            translation = np.linalg.norm(robotpose[:3, 3] - self.last_pop_pose[:3, 3])
+            # rotation = np.linalg.norm(uav_pose_matrix_np[:3, :3] - self.last_pcl_update_pose_matrix[:3, :3])
+
+            if translation > self.update_distance_threshold:
+                # Raise the flag, but dont save the pose yet
+                self.ready_to_pop = True
+
+                print("Moved enough! - " + str(translation))
+        else:
+            self.last_pop_pose = robotpose
+        pass
+
+    def pop_current_odomframe_submap_with_pose_matrix_if_new(self):
+        if self.ready_to_pop:
+            self.ready_to_pop = False
+            self.last_pop_pose = self.last_input_pose
+            # Return the last pose for which the pcl was computed
+            return 42, self.last_pop_pose
+        else:
+            return None
+
+        pass
+
+    def compute_noncanopy_heightmap(self, submap_odomframe_pcl_np, meters_per_pixel):
+        # This is a hack, discard the submap data, use occupancy
+        hmap = copy.deepcopy(self.last_occupancy_map)
+        hmap[hmap < 0.9] = 0
+        hmap[hmap >= 0.9] = self.occupied_height
+        return hmap, self.last_occupancy_map_odom_center
+# # #}
+
 if __name__ == "__main__":
-    maproot = "/home/tom/git/ratsim/unity_maps/miniscale/"
+    maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
     # maproot = "/home/tom/git/ratsim/unity_maps/ultrascale/"
     # maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
     # maproot = "/home/tom/git/ratsim/unity_maps/urban/"
@@ -27,9 +87,14 @@ if __name__ == "__main__":
 
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
     matplotlib.use("TkAgg")
-    monolith.construct_map_from_satellite_data(maproot, visualize=True)
-    monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
+    monolith.reference_map = MapBasic([], do_odom_conns=False)
+    # monolith.construct_map_from_satellite_data(maproot, visualize=True)
+    # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
+    # monolith.reference_map.load_from_pickle("/home/tom/ratsim_maps/map1.pickle")
+    monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
+    # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
+    monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)
 
     monolith.set_operation_mode('localization')
 
@@ -50,6 +115,7 @@ if __name__ == "__main__":
 
 
     step_count = 0
+    plt.ion()  # turn on interactive mode
 
     while True:
         # lidarmsg = conn.get_received_messages("/lidar2d")[0]
@@ -58,11 +124,37 @@ if __name__ == "__main__":
         last_obsv, done = sim.step({"/cmd_vel": [twistmsg]})
 
         if lidar_topic in last_obsv and pose_topic in last_obsv:
-            mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
+            # Update robot pose
+            pose_twistmsg = last_obsv[pose_topic][0]
+            robotpose = np.eye(4)
+            robotpose[0, 3] = pose_twistmsg.forward
+            robotpose[1, 3] = pose_twistmsg.left
+            robotpose[0:3, 0:3] = rotation_matrix_from_rot_around_z(pose_twistmsg.radiansCounterClockwise)
 
+            # Update local mapper
+            mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
             if step_count % 20 == 0:
                 # mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
                 mapper.visualize_map_dynamic()
+            monolith.sensory_preprocessor.update_occupancy_map_and_center(mapper.map, mapper.map_center_odomframe)
+
+            # Update monolith
+            monolith.sensory_preprocessor.update_uav_pose_odomframe(robotpose)
+            if monolith.sensory_preprocessor.ready_to_pop:
+                print("MOVED ENOUGH FOR PCL UPDATE")
+                monolith.mainloop_iter()
+
+                # TODO - repair this block of code, was in ROS, now want to visualize each img in an interactive plt window
+                names_n_imgs = monolith.get_vis_imgs()
+                for name, img in names_n_imgs:
+                    print("Showing image:", name)
+                    window_name = f"/msnav/{name}"
+                    plt.figure(window_name)        # reuse window for same name
+                    plt.imshow(img)
+                    plt.title(window_name)
+                    plt.axis("off")
+                    plt.draw()
+                    plt.pause(0.05)              # allow matplotlib to refresh
 
         print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
         sim.conn.log_connection_stats()
