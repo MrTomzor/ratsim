@@ -83,10 +83,19 @@ if __name__ == "__main__":
     
 
     # MAP LOADING SETTINGS
-    maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
-    # maproot = "/home/tom/git/ratsim/unity_maps/ultrascale/"
-    # maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
-    # maproot = "/home/tom/git/ratsim/unity_maps/urban/"
+    # mapname = "mini200x200"
+    # start_x = 200
+    # start_z = 200
+    # start_rot = 0
+
+    mapname = "temeslike"
+    start_x = 200
+    start_z = 200
+    start_rot = 0
+
+    # mapname = "simple"
+
+    maproot = "/home/tom/git/ratsim/unity_maps/" + mapname + "/"
     mapgentemplate = MapGenTemplate(maproot, meters_per_pixel=2)
     print("MapGenTemplate created")
     # mapgentemplate.visualize()
@@ -101,7 +110,8 @@ if __name__ == "__main__":
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     # monolith.reference_map.load_from_pickle("/home/tom/ratsim_maps/map1.pickle")
-    monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
+    # monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
+    monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
     # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
     monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)
@@ -110,17 +120,22 @@ if __name__ == "__main__":
 
     sim = NavSim()
     
-    # First step
+    # First step - load map and teleport to start
     mapgenmsg = mapgentemplate.to_ratsim_msg()
     mapgentopic = "/mapgen"
+    teleport_topic = "/rat1_teleport"
     print("Sending mapgen message")
-    last_obsv, done = sim.step({mapgentopic: [mapgenmsg]})
+    start_pose_msg = Twist2DMessage()
+    start_pose_msg.forward = start_z
+    start_pose_msg.left = -start_x
+    start_pose_msg.radiansCounterClockwise = start_rot
+    last_obsv, done = sim.step({mapgentopic: [mapgenmsg], teleport_topic : [start_pose_msg]})
 
     # rgbd_topic = "/rgbd"
     lidar_topic = "/lidar2d"
     pose_topic = "/rat1_pose"
 
-    mapper = OccupancyMapperSliding2D(resolution=1, map_cells_width=100)
+    mapper = OccupancyMapperSliding2D(resolution=2, map_cells_width=40)
     reactive_controller = ReactiveController(2, 4, 1, 0.5, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
 
 

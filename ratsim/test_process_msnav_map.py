@@ -1,10 +1,15 @@
 from msnav.monolith import *
 
 if __name__ == "__main__":
+    mapname = "mini200x200"
+
     # maproot = "/home/tom/git/ratsim/unity_maps/miniscale/"
     # maproot = "/home/tom/git/ratsim/unity_maps/ultrascale/"
-    maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
+    # maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
     # maproot = "/home/tom/git/ratsim/unity_maps/urban/"
+    maproot = "/home/tom/git/ratsim/unity_maps/" + mapname + "/"
+
+    # automatically get map name as last directory in path
 
     robotpose = np.eye(4)
 
@@ -15,8 +20,10 @@ if __name__ == "__main__":
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
     matplotlib.use("TkAgg")
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
-    monolith.construct_map_from_satellite_data(maproot, num_places = 2000)
-    monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
+    # monolith.construct_map_from_satellite_data(maproot, num_places = 2000)
+    monolith.construct_map_from_satellite_data(maproot, num_places = 1000, meters_per_pixel=2, description_square_w_meters = 80)
+    # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
+    monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
 
     monolith.reference_map.visualize_kmeans(n_clusters=2)
     monolith.reference_map.visualize()
