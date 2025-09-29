@@ -70,11 +70,23 @@ class VirtualPclPreprocessor:# # #{
 # # #}
 
 if __name__ == "__main__":
+
+    # VISU SETTINGS
+    visualization_mode = "interactive"
+    # visualization_mode = "save"
+    # visualization_mode = "none"
+
+    if visualization_mode == "interactive":
+        matplotlib.use("TkAgg")
+    if visualization_mode == "save" or visualization_mode == "none":
+        matplotlib.use("Agg")
+    
+
+    # MAP LOADING SETTINGS
     maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
     # maproot = "/home/tom/git/ratsim/unity_maps/ultrascale/"
     # maproot = "/home/tom/git/ratsim/unity_maps/temeslike/"
     # maproot = "/home/tom/git/ratsim/unity_maps/urban/"
-
     mapgentemplate = MapGenTemplate(maproot, meters_per_pixel=2)
     print("MapGenTemplate created")
     # mapgentemplate.visualize()
@@ -86,8 +98,6 @@ if __name__ == "__main__":
         return robotpose
 
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
-    matplotlib.use("TkAgg")
-    monolith.reference_map = MapBasic([], do_odom_conns=False)
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     # monolith.reference_map.load_from_pickle("/home/tom/ratsim_maps/map1.pickle")
@@ -144,17 +154,15 @@ if __name__ == "__main__":
                 print("MOVED ENOUGH FOR PCL UPDATE")
                 monolith.mainloop_iter()
 
-                # TODO - repair this block of code, was in ROS, now want to visualize each img in an interactive plt window
-                names_n_imgs = monolith.get_vis_imgs()
-                for name, img in names_n_imgs:
-                    print("Showing image:", name)
-                    window_name = f"/msnav/{name}"
-                    plt.figure(window_name)        # reuse window for same name
-                    plt.imshow(img)
-                    plt.title(window_name)
-                    plt.axis("off")
-                    plt.draw()
-                    plt.pause(0.05)              # allow matplotlib to refresh
+                # Save imgs if requested
+                if visualization_mode == "save":
+                    names_n_imgs = monolith.get_vis_imgs()
+                    for name, img in names_n_imgs:
+                        # Save image to file
+                        savedir = "/home/tom/testvis/"
+                        # add img name and step count to filename
+                        filename = savedir + name + "_" + str(step_count) + ".png"
+                        plt.imsave(filename, img)
 
         print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
         sim.conn.log_connection_stats()
