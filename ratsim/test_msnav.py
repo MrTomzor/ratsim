@@ -84,14 +84,29 @@ if __name__ == "__main__":
 
     # MAP LOADING SETTINGS
     # mapname = "mini200x200"
+    # start_x = 100
+    # start_z = 100
+    # start_rot = -np.pi/2
+
+    # mapname = "simple"
+    # start_x = 400
+    # start_z = 200
+    # start_rot = np.pi/2
+
+    mapname = "simple"
+    start_x = 600
+    start_z = 150
+    start_rot = -np.pi/2
+
+    # mapname = "bigforest"
+    # start_x = 500
+    # start_z = 500
+    # start_rot = -np.pi/2
+
+    # mapname = "temeslike"
     # start_x = 200
     # start_z = 200
     # start_rot = 0
-
-    mapname = "temeslike"
-    start_x = 200
-    start_z = 200
-    start_rot = 0
 
     # mapname = "simple"
 
@@ -136,7 +151,15 @@ if __name__ == "__main__":
     pose_topic = "/rat1_pose"
 
     mapper = OccupancyMapperSliding2D(resolution=2, map_cells_width=40)
-    reactive_controller = ReactiveController(2, 4, 1, 0.5, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
+    # vel1 = 2
+    # vel2 = 4
+    # angvel1 = 1
+    # angvel2 = 0.5
+    vel1 = 6
+    vel2 = 12
+    angvel1 = 2
+    angvel2 = 1
+    reactive_controller = ReactiveController(vel1, vel2, angvel1, angvel2, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
 
 
     step_count = 0
@@ -159,14 +182,13 @@ if __name__ == "__main__":
 
             # Update local mapper
             mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
-            if step_count % 20 == 0:
-                # mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
-                mapper.visualize_map_dynamic()
             monolith.sensory_preprocessor.update_occupancy_map_and_center(mapper.map, mapper.map_center_odomframe)
 
             # Update monolith
             monolith.sensory_preprocessor.update_uav_pose_odomframe(robotpose)
             if monolith.sensory_preprocessor.ready_to_pop:
+
+                mapper.visualize_map_dynamic()
                 print("MOVED ENOUGH FOR PCL UPDATE")
                 monolith.mainloop_iter()
 
