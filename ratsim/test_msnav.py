@@ -127,6 +127,7 @@ if __name__ == "__main__":
     step_count = 0
     plt.ion()  # turn on interactive mode
 
+
     while True:
         # lidarmsg = conn.get_received_messages("/lidar2d")[0]
         # twistmsg = reactive_controller.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
@@ -137,8 +138,8 @@ if __name__ == "__main__":
             # Update robot pose
             pose_twistmsg = last_obsv[pose_topic][0]
             robotpose = np.eye(4)
-            robotpose[0, 3] = pose_twistmsg.forward
-            robotpose[1, 3] = pose_twistmsg.left
+            robotpose[1, 3] = pose_twistmsg.forward
+            robotpose[0, 3] = -pose_twistmsg.left
             robotpose[0:3, 0:3] = rotation_matrix_from_rot_around_z(pose_twistmsg.radiansCounterClockwise)
 
             # Update local mapper

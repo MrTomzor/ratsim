@@ -157,7 +157,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 29.4
+      value: 794
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -165,7 +165,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 29.4
+      value: 316
       objectReference: {fileID: 0}
     - target: {fileID: 6529735708114265031, guid: 0ae93e67618110b34b723175f187b20e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -493,7 +493,7 @@ MonoBehaviour:
   playerObject: {fileID: 85795636}
   playerChunkX: 0
   playerChunkY: 0
-  playerSensingRange: 100
+  playerSensingRange: 1000
   chunkSize: 50
 --- !u!4 &832895815
 Transform:
