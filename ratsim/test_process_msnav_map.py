@@ -3,7 +3,8 @@ from msnav.monolith import *
 if __name__ == "__main__":
     # mapname = "mini200x200"
     # mapname = "simple"
-    mapname = "bigforest"
+    # mapname = "bigforest"
+    mapname = "temeslike"
     # mapname = "gigascale"
 
     maproot = "/home/tom/git/ratsim/unity_maps/" + mapname + "/"
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     matplotlib.use("TkAgg")
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.construct_map_from_satellite_data(maproot, num_places = 2000)
-    monolith.construct_map_from_satellite_data(maproot, num_places = 3000, meters_per_pixel=2, description_square_w_meters = 80)
+    monolith.construct_map_from_satellite_data(maproot, num_places = 3000, meters_per_pixel=2, description_square_w_meters = 80, place_dist=30)
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
 
