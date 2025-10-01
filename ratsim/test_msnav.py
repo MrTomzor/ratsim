@@ -93,13 +93,21 @@ if __name__ == "__main__":
     # start_z = 200
     # start_rot = np.pi/2
 
+    # FAIL 1
     # mapname = "simple"
     # start_x = 600
     # start_z = 150
-    mapname = "temeslike"
-    start_x = 150
-    start_z = 300
+    # start_rot = -np.pi/2
+
+    mapname = "simple"
+    start_x = 400
+    start_z = 200
     start_rot = -np.pi/2
+
+    # mapname = "temeslike"
+    # start_x = 150
+    # start_z = 300
+    # start_rot = -np.pi/2
 
     # mapname = "bigforest"
     # start_x = 500
@@ -131,7 +139,7 @@ if __name__ == "__main__":
     # monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
     monolith.reference_map.estimate_localization_directions(num_directions=8)
-    # monolith.reference_map.visualize()
+    monolith.reference_map.visualize(show_conns = False, show_entropies = True)
     monolith.reference_map.construct_kdtree()
     # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
