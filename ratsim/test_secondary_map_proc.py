@@ -101,7 +101,9 @@ if __name__ == "__main__":
     # start_z = 500
     # start_rot = -np.pi/2
 
-    mapname = "temeslike"
+    # mapname = "temeslike"
+    # mapname = "simple"
+    mapname = "bigforest"
     start_x = 200
     start_z = 200
     start_rot = 0
@@ -122,9 +124,10 @@ if __name__ == "__main__":
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
     monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
     print("Map loaded into monolith with " + str(len(monolith.reference_map.places)) + " places.")
-    monolith.reference_map.visualize()
+    # monolith.reference_map.visualize()
+    monolith.reference_map.estimate_localization_directions(num_directions=8)
+    monolith.reference_map.visualize_direction_scores()
 
-    refmap = monolith.reference_map
 
     # monolith.init_localizer_and_navigator()
     # monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)

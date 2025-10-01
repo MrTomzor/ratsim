@@ -93,9 +93,12 @@ if __name__ == "__main__":
     # start_z = 200
     # start_rot = np.pi/2
 
-    mapname = "simple"
-    start_x = 600
-    start_z = 150
+    # mapname = "simple"
+    mapname = "temeslike"
+    # start_x = 600
+    # start_z = 150
+    start_x = 150
+    start_z = 300
     start_rot = -np.pi/2
 
     # mapname = "bigforest"
@@ -127,11 +130,14 @@ if __name__ == "__main__":
     # monolith.reference_map.load_from_pickle("/home/tom/ratsim_maps/map1.pickle")
     # monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
+    monolith.reference_map.estimate_localization_directions(num_directions=8)
+    monolith.reference_map.construct_kdtree()
     # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
     monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)
 
-    monolith.set_operation_mode('localization')
+    # monolith.set_operation_mode('localization')
+    monolith.set_operation_mode('navigation')
 
     sim = NavSim()
     
@@ -150,7 +156,11 @@ if __name__ == "__main__":
     lidar_topic = "/lidar2d"
     pose_topic = "/rat1_pose"
 
-    mapper = OccupancyMapperSliding2D(resolution=2, map_cells_width=40)
+    # Create connection to unity
+    local_map_size_meters = monolith.reference_map.description_square_w_meters
+    resolution = monolith.reference_map.meters_per_pixel 
+
+    mapper = OccupancyMapperSliding2D(resolution=int(resolution), map_cells_width=int(local_map_size_meters/resolution))
     # vel1 = 2
     # vel2 = 4
     # angvel1 = 1

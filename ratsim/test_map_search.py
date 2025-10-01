@@ -101,9 +101,9 @@ if __name__ == "__main__":
     # start_z = 500
     # start_rot = -np.pi/2
 
-    # mapname = "temeslike"
+    mapname = "temeslike"
     # mapname = "bigforest"
-    mapname = "simple"
+    # mapname = "simple"
     start_x = 200
     start_z = 200
     start_rot = 0
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # Randomly select start and goal places
     modes = ["euclidean", "entropy_weighted"]
-    for i in range(10):
+    while True:
         start_pos_idx = np.random.randint(0, len(refmap.places))
         goal_pos_idx = np.random.randint(0, len(refmap.places))
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             if j == "euclidean":
                 path_idx_list, endcost, closed_set = refmap.find_euclidean_shortest_path(start_pos_idx, goal_pos_idx)
             if j == "entropy_weighted":
-                path_idx_list, endcost, closed_set = refmap.find_entropy_weighted_shortest_path(start_pos_idx, goal_pos_idx, entropy_weight=40)
+                path_idx_list, endcost, closed_set = refmap.find_entropy_weighted_shortest_path(start_pos_idx, goal_pos_idx, entropy_weight=30)
             end_time = time.time()
             print("Path search took " + str(1000 * (end_time - start_time)) + " miliseconds.")
 
@@ -176,7 +176,8 @@ if __name__ == "__main__":
 
         # VIsualize paths
         if len(respaths) == len(modes):
-            refmap.visualize_paths(respaths, modes)
+            # refmap.visualize_paths(respaths, modes)
+            refmap.visualize_paths(respaths, modes, show_places = False, show_conns = False)
 
 
 
