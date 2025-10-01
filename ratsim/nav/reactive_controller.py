@@ -12,15 +12,21 @@ class ReactiveController:
         self.dist_threshold1 = dist_threshold1
         self.dist_threshold2 = dist_threshold2
         self.ignore_colored = ignore_colored
+        self.target_angle_odomframe = None # radians, in odom frame
         pass
 
     def step(self, input_msgs):
         # lidarmsg = conn.get_received_messages("/lidar2d")[0]
         # print(input_msgs)
         lidarmsg = input_msgs["/lidar2d"][0]
-        return self.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
+        odom_msg = None
+        # print("Input msgs keys:")
+        # print(input_msgs.keys())
+        if "/rat1_pose" in input_msgs.keys():
+            odom_msg = input_msgs["/rat1_pose"][0]
+        return self.compute_forward_vel_and_angular_vel_for_input_msgs(lidarmsg, odom_msg)
 
-    def compute_forward_vel_and_angular_vel_for_lidar_msg(self, lidar_msg):
+    def compute_forward_vel_and_angular_vel_for_input_msgs(self, lidar_msg, odom_msg=None):
         left_min_dist, front_min_dist, right_min_dist = self.compute_sector_dists(lidar_msg)
         secdists = np.array([left_min_dist, front_min_dist, right_min_dist])
 
@@ -30,8 +36,22 @@ class ReactiveController:
         res = Twist2DMessage(0, 0, 0)
 
         if not any_in_dist2:
+            print("No obstacles nearby, going fast")
             res.forward = self.vel2
             res.radiansCounterClockwise = 0
+            # print(self.target_angle_odomframe)
+            # print(odom_msg)
+            if self.target_angle_odomframe is not None and odom_msg is not None:
+                angle_diff = self.target_angle_odomframe - odom_msg.radiansCounterClockwise
+                angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
+                print("angle diff to target:", angle_diff)
+                if np.abs(angle_diff) > 0.1:
+                    # self.target_angle_odomframe = None
+                    # else:
+
+                    # have the output ang velocity be abs(angvel2) when angle_diff is pi, and 0 when angle_diff is 0, linearly in between
+                    res.radiansCounterClockwise = np.sign(angle_diff) * min(self.angvel2, np.abs(angle_diff))
+                    print("Setting ang vel to:", res.radiansCounterClockwise)
         else:
             if not any_in_dist1: 
                 turn_angrate = 0

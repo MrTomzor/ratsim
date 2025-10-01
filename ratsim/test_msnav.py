@@ -94,9 +94,9 @@ if __name__ == "__main__":
     # start_rot = np.pi/2
 
     # mapname = "simple"
-    mapname = "temeslike"
     # start_x = 600
     # start_z = 150
+    mapname = "temeslike"
     start_x = 150
     start_z = 300
     start_rot = -np.pi/2
@@ -131,6 +131,7 @@ if __name__ == "__main__":
     # monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
     monolith.reference_map.estimate_localization_directions(num_directions=8)
+    # monolith.reference_map.visualize()
     monolith.reference_map.construct_kdtree()
     # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
@@ -201,6 +202,15 @@ if __name__ == "__main__":
                 mapper.visualize_map_dynamic()
                 print("MOVED ENOUGH FOR PCL UPDATE")
                 monolith.mainloop_iter()
+
+                # Use navigator output if navigation mode
+                if monolith.operation_mode == 'navigation':
+                    # goal_odomframe = monolith.navigator.get_new_goal_2dpos_in_odomframe_if_available()
+                    goal_angle_odomframe = monolith.navigator.get_goal_angle_if_available()
+                    if goal_angle_odomframe is not None:
+                        print("SETTING GOAL ANGLE TO:", goal_angle_odomframe)
+                        reactive_controller.target_angle_odomframe = goal_angle_odomframe
+
 
                 # Save imgs if requested
                 if visualization_mode == "save":
