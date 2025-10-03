@@ -63,6 +63,7 @@ class VirtualPclPreprocessor:# # #{
 
     def compute_noncanopy_heightmap(self, submap_odomframe_pcl_np, meters_per_pixel):
         # This is a hack, discard the submap data, use occupancy
+        self.heightmap_meters_per_pixel = meters_per_pixel
         hmap = copy.deepcopy(self.last_occupancy_map)
         hmap[hmap < 0.9] = 0
         hmap[hmap >= 0.9] = self.occupied_height
@@ -84,8 +85,8 @@ if __name__ == "__main__":
 
     # MAP LOADING SETTINGS
     # mapname = "mini200x200"
-    # start_x = 100
-    # start_z = 100
+    # start_x = 200
+    # start_z = 200
     # start_rot = -np.pi/2
 
     # mapname = "simple"
@@ -99,15 +100,24 @@ if __name__ == "__main__":
     # start_z = 150
     # start_rot = -np.pi/2
 
-    mapname = "simple"
-    start_x = 400
-    start_z = 200
-    start_rot = -np.pi/2
-
-    # mapname = "temeslike"
-    # start_x = 150
-    # start_z = 300
+    # mapname = "simple"
+    # start_x = 200
+    # start_z = 200
     # start_rot = -np.pi/2
+
+    mapname = "temeslike"
+    # Start field
+    start_x = 400
+    start_z = 300
+
+    # Start house
+    # start_x = 200
+    # start_z = 200
+
+    # Start forest
+    # start_x = 900
+    # start_z = 100
+    start_rot = -np.pi/2
 
     # mapname = "bigforest"
     # start_x = 500
@@ -139,7 +149,7 @@ if __name__ == "__main__":
     # monolith.load_map_from_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
     monolith.reference_map.estimate_localization_directions(num_directions=8)
-    monolith.reference_map.visualize(show_conns = False, show_entropies = True)
+    # monolith.reference_map.visualize(show_conns = False, show_entropies = True)
     monolith.reference_map.construct_kdtree()
     # monolith.reference_map.visualize()
     monolith.init_localizer_and_navigator()
@@ -202,6 +212,7 @@ if __name__ == "__main__":
             # Update local mapper
             mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
             monolith.sensory_preprocessor.update_occupancy_map_and_center(mapper.map, mapper.map_center_odomframe)
+            monolith.sensory_preprocessor.heightmap_meters_per_pixel = monolith.reference_map.meters_per_pixel 
 
             # Update monolith
             monolith.sensory_preprocessor.update_uav_pose_odomframe(robotpose)
