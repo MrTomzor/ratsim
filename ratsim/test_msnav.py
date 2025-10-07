@@ -118,14 +118,14 @@ if __name__ == "__main__":
     mapname = "temesvar"
     mpp = 1
     # BIGSCALE - START FIELD
-    # start_rot = -np.pi/2
-    # start_x = 300
-    # start_z = 200
+    start_rot = np.pi/2
+    start_x = 300
+    start_z = 200
 
     # START NEAR HOUSE
-    start_rot = -np.pi/2
-    start_x = 240
-    start_z = 170
+    # start_rot = -np.pi/2
+    # start_x = 240
+    # start_z = 170
 
     # start_x = 300
     # start_z = 400
