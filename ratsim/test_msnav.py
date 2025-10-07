@@ -68,6 +68,15 @@ class VirtualPclPreprocessor:# # #{
         hmap[hmap < 0.9] = 0
         hmap[hmap >= 0.9] = self.occupied_height
         return hmap, self.last_occupancy_map_odom_center
+
+    def compute_occupied_and_free_space(self, submap_odomframe_pcl_np, meters_per_pixel):
+        # This is a hack, discard the submap data, use occupancy
+        self.heightmap_meters_per_pixel = meters_per_pixel
+        occupancy_0_to_1 = copy.deepcopy(self.last_occupancy_map)
+        occupied = (occupancy_0_to_1 > 0.9).astype(np.uint8)
+        free = ((occupancy_0_to_1 > 0.1) & (occupancy_0_to_1 <= 0.9)).astype(np.uint8)
+
+        return occupied, free, self.last_occupancy_map_odom_center
 # # #}
 
 if __name__ == "__main__":
@@ -107,12 +116,12 @@ if __name__ == "__main__":
 
     mapname = "temeslike"
     # Start field
-    start_x = 400
-    start_z = 300
+    # start_x = 400
+    # start_z = 300
 
     # Start house
-    # start_x = 200
-    # start_z = 200
+    start_x = 200
+    start_z = 250
 
     # Start forest
     # start_x = 900

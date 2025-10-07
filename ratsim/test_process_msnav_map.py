@@ -10,7 +10,8 @@ if __name__ == "__main__":
 
 
     # num_places = 3000
-    num_places = 1000
+    # num_places = 1000
+    num_places = 100
     desc_square_meters = 100
 
     if len(sys.argv) > 1:

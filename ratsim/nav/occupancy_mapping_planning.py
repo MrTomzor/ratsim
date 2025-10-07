@@ -3,6 +3,7 @@ from ratsim.roslike_unity_connector.message_definitions import *
 from ratsim.nav.utils import *
 import numpy as np
 import math
+
 # TODO - fix relative imports
 
 
@@ -14,6 +15,16 @@ class OccupancyMapperSliding2D:
         self.resolution = resolution
         self.map_center_odomframe = None
         self.map_cells_width = map_cells_width
+
+        # Precompute ray directions for free space carving when no pts come in some direction
+        # Generate unit vectors in a circle
+        n_freespace_rays = 36
+        self.freespace_ray_dirs = []
+        for i in range(n_freespace_rays):
+            angle = (i / n_freespace_rays) * 2 * np.pi
+            self.freespace_ray_dirs.append(np.array([np.cos(angle), np.sin(angle)]))
+        self.freespace_ray_dirs = np.array(self.freespace_ray_dirs)
+
 
         pass
 
@@ -92,7 +103,7 @@ class OccupancyMapperSliding2D:
         half_width = (self.map.shape[0] / 2) * self.resolution
         points_xy_mapcells = ((points_xy_mapframe + half_width) / self.resolution).astype(np.int32)
         
-        # Handle all points
+        # Handle all measured points
         # for pt in points_xy_mapcells:
         for i in range(points_xy_mapcells.shape[0]):
 
@@ -113,19 +124,29 @@ class OccupancyMapperSliding2D:
                     if self.map[ry, rx] < 0.5:
                         self.map[ry, rx] = 0.5
 
-            # ray = line_to_cells(raystart_x, raystart_y, map_x, map_y, 1)
-            # for coord in ray[:-1]:  # skip the last cell (occupied one)
-            #     rx, ry = coord
-            #     if 0 <= rx < self.map.shape[1] and 0 <= ry < self.map.shape[0]:
-            #         self.map[ry, rx] = -1
-
             # Set cell to occupied if in bounds
             if 0 <= map_x < self.map.shape[1] and 0 <= map_y < self.map.shape[0]:
                 self.map[map_y, map_x] = 1.0
 
-            # Cast ray from origin to point and set cells to free
-            #TODO 
-            # ray_points = bresenham2d(0, 0, pt[0], pt[1])
+        # Free space carving for rays with no returns
+        num_freespace_cast_pts = 0
+        for ray_dir in self.freespace_ray_dirs:
+            freespace_cast_dist = int(half_width * 0.8)
+            rayend = pos_odomframe + ray_dir * freespace_cast_dist
+            rayend_mapframe = rayend - self.map_center_odomframe
+            rayend_mapcells = ((rayend_mapframe + half_width) / self.resolution).astype(np.int32)
+
+            ray = bresenham(int(self.map.shape[1]//2), int(self.map.shape[0]//2), int(rayend_mapcells[0]), int(rayend_mapcells[1]))
+            for rx, ry in ray:
+                if 0 <= rx < self.map.shape[1] and 0 <= ry < self.map.shape[0]:
+                    if self.map[ry, rx] < 0.5:
+                        self.map[ry, rx] = 0.5
+                        num_freespace_cast_pts += 1
+                    elif self.map[ry, rx] > 0.5: # if occupied, stop carving
+                        break
+        print(f"Carved {num_freespace_cast_pts} additional free space points")
+        
+
 # # #}
 
     def process_ratsim_msgs(self, lidar_msg: Lidar2DMessage, pose_msg :Twist2DMessage):# # #{
