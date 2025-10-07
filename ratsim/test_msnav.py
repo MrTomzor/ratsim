@@ -91,6 +91,7 @@ if __name__ == "__main__":
     if visualization_mode == "save" or visualization_mode == "none":
         matplotlib.use("Agg")
     
+    mpp = 2
 
     # MAP LOADING SETTINGS
     # mapname = "mini200x200"
@@ -114,8 +115,26 @@ if __name__ == "__main__":
     # start_z = 200
     # start_rot = -np.pi/2
 
-    mapname = "temeslike"
+    mapname = "temesvar"
+    mpp = 1
+    # BIGSCALE - START FIELD
+    # start_rot = -np.pi/2
+    # start_x = 300
+    # start_z = 200
+
+    # START NEAR HOUSE
     start_rot = -np.pi/2
+    start_x = 240
+    start_z = 170
+
+    # start_x = 300
+    # start_z = 400
+
+    # start_x = 700
+    # start_z = 400
+
+    # mapname = "temeslike"
+    # start_rot = -np.pi/2
     # Start field
     # start_x = 400
     # start_z = 300
@@ -123,8 +142,8 @@ if __name__ == "__main__":
     # start_x = 300
     # start_z = 400
 
-    start_x = 700
-    start_z = 400
+    # start_x = 700
+    # start_z = 400
 
     # Forest road
     # start_x = 850
@@ -152,7 +171,7 @@ if __name__ == "__main__":
     # mapname = "simple"
 
     maproot = "/home/tom/git/ratsim/unity_maps/" + mapname + "/"
-    mapgentemplate = MapGenTemplate(maproot, meters_per_pixel=2)
+    mapgentemplate = MapGenTemplate(maproot, meters_per_pixel=mpp)
     print("MapGenTemplate created")
     # mapgentemplate.visualize()
 
@@ -175,8 +194,8 @@ if __name__ == "__main__":
     monolith.init_localizer_and_navigator()
     monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)
 
-    # monolith.set_operation_mode('localization')
-    monolith.set_operation_mode('navigation')
+    monolith.set_operation_mode('localization')
+    # monolith.set_operation_mode('navigation')
 
     sim = NavSim()
     
