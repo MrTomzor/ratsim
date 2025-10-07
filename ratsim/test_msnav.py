@@ -115,18 +115,29 @@ if __name__ == "__main__":
     # start_rot = -np.pi/2
 
     mapname = "temeslike"
+    start_rot = -np.pi/2
     # Start field
     # start_x = 400
     # start_z = 300
 
+    # start_x = 300
+    # start_z = 400
+
+    start_x = 700
+    start_z = 400
+
+    # Forest road
+    # start_x = 850
+    # start_z = 400
+
     # Start house
-    start_x = 200
-    start_z = 250
+    # start_x = 200
+    # start_z = 250
 
     # Start forest
-    # start_x = 900
-    # start_z = 100
-    start_rot = -np.pi/2
+    # start_x = 850
+    # start_z = 80
+    # start_rot = -np.pi/2
 
     # mapname = "bigforest"
     # start_x = 500
