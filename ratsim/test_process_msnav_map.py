@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
 
     # num_places = 3000
-    num_places = 2000
+    num_places = 1000
     desc_square_meters = 100
 
     if len(sys.argv) > 1:
@@ -38,8 +38,8 @@ if __name__ == "__main__":
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
 
-    # monolith.reference_map.visualize_kmeans(n_clusters=2)
-    monolith.reference_map.visualize(show_conns = False,show_hogs = True, show_entropies = False)
-    monolith.reference_map.visualize(show_conns = False,show_entropies = True)
+    monolith.reference_map.visualize_kmeans(n_clusters=5)
+    # monolith.reference_map.visualize(show_conns = False,show_hogs = True, show_entropies = False)
+    # monolith.reference_map.visualize(show_conns = False,show_entropies = True)
 
 
