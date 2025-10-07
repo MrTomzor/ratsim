@@ -5,7 +5,8 @@ if __name__ == "__main__":
     # mapname = "mini200x200"
     # mapname = "simple"
     # mapname = "bigforest"
-    mapname = "temeslike"
+    # mapname = "temeslike"
+    mapname = "temesvar"
     # mapname = "gigascale"
 
 
@@ -13,6 +14,8 @@ if __name__ == "__main__":
     # num_places = 1000
     num_places = 100
     desc_square_meters = 100
+    # mpp = 2 #   
+    mpp = 1 #
 
     if len(sys.argv) > 1:
         mapname = sys.argv[1]
@@ -35,7 +38,7 @@ if __name__ == "__main__":
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.construct_map_from_satellite_data(maproot, num_places = 2000)
     # monolith.construct_map_from_satellite_data(maproot, num_places = num_places, meters_per_pixel=2, description_square_w_meters = 100, place_dist=30)
-    monolith.construct_map_from_satellite_data(maproot, num_places = num_places, meters_per_pixel=2, description_square_w_meters = desc_square_meters, place_dist=30)
+    monolith.construct_map_from_satellite_data(maproot, num_places = num_places, meters_per_pixel=mpp, description_square_w_meters = desc_square_meters, place_dist=30)
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
 
