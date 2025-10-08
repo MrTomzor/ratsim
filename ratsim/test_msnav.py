@@ -128,14 +128,20 @@ if __name__ == "__main__":
     # start_z = 300
 
     # START TREE
-    start_x = 380
-    start_z = 180
-    start_rot = -np.pi / 2
+    # start_x = 380
+    # start_z = 180
+    # start_rot = -np.pi / 2
 
-    # START NEAR HOUSE
+    # START NEAR HOUSE N LEAVE
     # start_rot = -np.pi/2
     # start_x = 240
     # start_z = 170
+
+    # RUN AROUND ON HRISTE
+    start_rot = -np.pi/2
+    start_x = 230
+    start_z = 170
+
 
     # start_x = 300
     # start_z = 400
