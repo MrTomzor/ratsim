@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # START TREE
     start_x = 380
     start_z = 180
-    start_rot = 0
+    start_rot = -np.pi / 2
 
     # START NEAR HOUSE
     # start_rot = -np.pi/2
