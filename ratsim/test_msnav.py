@@ -118,9 +118,19 @@ if __name__ == "__main__":
     mapname = "temesvar"
     mpp = 1
     # BIGSCALE - START FIELD
-    start_rot = np.pi/2
-    start_x = 300
-    start_z = 200
+    # start_rot = np.pi/2
+    # start_x = 300
+    # start_z = 200
+
+    # BIGSCALE - START FORESTEDGE
+    # start_rot = -np.pi/2
+    # start_x = 500
+    # start_z = 300
+
+    # START TREE
+    start_x = 380
+    start_z = 180
+    start_rot = 0
 
     # START NEAR HOUSE
     # start_rot = -np.pi/2
