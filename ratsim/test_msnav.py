@@ -127,6 +127,16 @@ if __name__ == "__main__":
     # start_x = 500
     # start_z = 300
 
+    # start_rot = -np.pi/2
+    # start_x = 450
+    # start_z = 300
+
+    start_rot = 0
+    start_x = 350
+    # start_z = 330
+    start_z = 350
+
+
     # START TREE
     # start_x = 380
     # start_z = 180
@@ -138,9 +148,9 @@ if __name__ == "__main__":
     # start_z = 170
 
     # RUN AROUND ON HRISTE
-    start_rot = -np.pi/2
-    start_x = 230
-    start_z = 170
+    # start_rot = -np.pi/2
+    # start_x = 230
+    # start_z = 170
 
 
     # start_x = 300
