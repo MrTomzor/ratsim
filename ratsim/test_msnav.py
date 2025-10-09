@@ -127,14 +127,14 @@ if __name__ == "__main__":
     # start_x = 500
     # start_z = 300
 
-    # start_rot = -np.pi/2
-    # start_x = 450
-    # start_z = 300
+    start_rot = -np.pi/2
+    start_x = 450
+    start_z = 300
 
-    start_rot = 0
-    start_x = 350
-    # start_z = 330
-    start_z = 350
+    # start_rot = 0
+    # start_x = 350
+    # # start_z = 330
+    # start_z = 350
 
 
     # START TREE
@@ -208,6 +208,8 @@ if __name__ == "__main__":
         return robotpose
 
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
+    monolith.preproc_mode = 'occupancy'
+
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/map1.pickle")
     # monolith.reference_map.load_from_pickle("/home/tom/ratsim_maps/map1.pickle")
@@ -217,11 +219,14 @@ if __name__ == "__main__":
     # monolith.reference_map.visualize(show_conns = False, show_entropies = True)
     monolith.reference_map.construct_kdtree()
     # monolith.reference_map.visualize()
-    monolith.init_localizer_and_navigator()
     monolith.sensory_preprocessor = VirtualPclPreprocessor(update_distance_threshold=10.0, occupied_height=5)
+    monolith.init_localizer_and_navigator()
+    # monolith.set_goal_pos_odomframe(np.array([200, 200]))
+    # monolith.set_goal_pos_odomframe(np.array([256, 159])) # hriste
+    monolith.set_goal_pos_odomframe(np.array([236, 206])) # temesvar house
 
-    monolith.set_operation_mode('localization')
-    # monolith.set_operation_mode('navigation')
+    # monolith.set_operation_mode('localization')
+    monolith.set_operation_mode('navigation')
 
     sim = NavSim()
     
@@ -245,15 +250,16 @@ if __name__ == "__main__":
     resolution = monolith.reference_map.meters_per_pixel 
 
     mapper = OccupancyMapperSliding2D(resolution=int(resolution), map_cells_width=int(local_map_size_meters/resolution))
-    # vel1 = 2
-    # vel2 = 4
-    # angvel1 = 1
-    # angvel2 = 0.5
+    # vel1 = 6
+    # vel2 = 12
+    # angvel1 = 2
+    # angvel2 = 1
+    # reactive_controller = ReactiveController(vel1, vel2, angvel1, angvel2, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
     vel1 = 6
-    vel2 = 12
+    vel2 = 18
     angvel1 = 2
     angvel2 = 1
-    reactive_controller = ReactiveController(vel1, vel2, angvel1, angvel2, dist_threshold1=3, dist_threshold2=5, ignore_colored=True) 
+    reactive_controller = ReactiveController(vel1, vel2, angvel1, angvel2, dist_threshold1=1.5, dist_threshold2=2, ignore_colored=True) 
 
 
     step_count = 0
@@ -278,6 +284,7 @@ if __name__ == "__main__":
             mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
             monolith.sensory_preprocessor.update_occupancy_map_and_center(mapper.map, mapper.map_center_odomframe)
             monolith.sensory_preprocessor.heightmap_meters_per_pixel = monolith.reference_map.meters_per_pixel 
+            monolith.sensory_preprocessor.uav_pose_odomframe = robotpose
 
             # Update monolith
             monolith.sensory_preprocessor.update_uav_pose_odomframe(robotpose)
@@ -290,10 +297,30 @@ if __name__ == "__main__":
                 # Use navigator output if navigation mode
                 if monolith.operation_mode == 'navigation':
                     # goal_odomframe = monolith.navigator.get_new_goal_2dpos_in_odomframe_if_available()
-                    goal_angle_odomframe = monolith.navigator.get_goal_angle_if_available()
-                    if goal_angle_odomframe is not None:
-                        print("SETTING GOAL ANGLE TO:", goal_angle_odomframe)
-                        reactive_controller.target_angle_odomframe = goal_angle_odomframe
+
+                    # goal_angle_odomframe = monolith.navigator.get_goal_angle_if_available()
+                    # if goal_angle_odomframe is not None:
+                    #     print("SETTING GOAL ANGLE TO:", goal_angle_odomframe)
+                    #     reactive_controller.target_angle_odomframe = goal_angle_odomframe
+
+                    # goalpos_odomframe = monolith.navigator.compute_goal_2dpos_in_odomframe()
+                    goalpos_odomframe = monolith.out_pos_odomframe_2d 
+                    if goalpos_odomframe is not None:
+                        print("SETTING GOAL POS TO:", goalpos_odomframe)
+                        # Comptue angle in odomframe to goal
+                        deltavec = goalpos_odomframe - robotpose[0:2, 3]
+                        print("Deltavec:", deltavec)
+                        angle_to_goal_odomframe = np.arctan2(deltavec[1], deltavec[0])
+                        print("Orig angle to goal:", angle_to_goal_odomframe * 180 / np.pi)
+                        # modify angle because in the simulator forward is along +y axis
+                        angle_to_goal_odomframe -= np.pi / 2
+                        print("Adj angle to goal:", angle_to_goal_odomframe * 180 / np.pi)
+
+                        print("Degrees to goal:", angle_to_goal_odomframe * 180 / np.pi)
+
+                        reactive_controller.target_angle_odomframe = angle_to_goal_odomframe
+
+                        # reactive_controller.target_pos_odomframe = goalpos_odomframe
 
 
                 # Save imgs if requested
