@@ -21,7 +21,7 @@ class RoslikeUnityConnector:
         self.received_messages = []
         self.receive_messages_topics = []
 
-        self.timeout_seconds = 1
+        self.timeout_seconds = 5
 
         self.send_buffer = b""
 
