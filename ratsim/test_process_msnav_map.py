@@ -43,8 +43,8 @@ if __name__ == "__main__":
     # Save reference map to pickle
     monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
 
-    monolith.reference_map.visualize_kmeans(n_clusters=3)
-    # monolith.reference_map.visualize(show_conns = False,show_hogs = True, show_entropies = False)
-    monolith.reference_map.visualize(show_conns = False,show_entropies = True)
+    # monolith.reference_map.visualize_kmeans(n_clusters=3)
+    monolith.reference_map.visualize(show_conns = False,show_hogs = True, show_entropies = False)
+    # monolith.reference_map.visualize(show_conns = False,show_entropies = True)
 
 

@@ -1,5 +1,4 @@
 from msnav.monolith import *
-from msnav.map_merger import *
 import sys
 
 if __name__ == "__main__":
@@ -36,41 +35,18 @@ if __name__ == "__main__":
 
     monolith = Monolith(uav_pose_odomframe_function=get_uav_pose_in_odomframe_np, databases_path="/home/tom/ratsim_dbs/")
     matplotlib.use("TkAgg")
+    monolith.load_map_from_pickle(maproot + mapname + ".pickle")
     # monolith.construct_map_from_satellite_data(maproot, visualize=True)
     # monolith.construct_map_from_satellite_data(maproot, num_places = 2000)
     # monolith.construct_map_from_satellite_data(maproot, num_places = num_places, meters_per_pixel=2, description_square_w_meters = 100, place_dist=30)
     # monolith.construct_map_from_satellite_data(maproot, num_places = num_places, meters_per_pixel=mpp, description_square_w_meters = desc_square_meters, place_dist=30)
 
-    monolith.load_map_from_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
-
     # Save reference map to pickle
-    # monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + ".pickle")
+    monolith.reference_map.save_to_pickle("/home/tom/ratsim_maps/" + mapname + "_upgraded" + ".pickle")
 
-
-    monolith.reference_map.estimate_localization_directions(num_directions=8)
+    # monolith.reference_map.visualize_kmeans(n_clusters=3)
     # monolith.reference_map.visualize(show_conns = False,show_hogs = True, show_entropies = False)
 
     monolith.reference_map.visualize(show_conns = False,show_entropies = True)
-
-    monolith.reference_map.visualize_kmeans(n_clusters=3)
-
-    # forbid = monolith.reference_map.
-
-    # vis_places = []
-    # # get every 10th place
-    # for i, place in enumerate(monolith.reference_map.places):
-    #     if i % 20 == 0:
-    #         vis_places.append(place)
-
-    # visualize_places_semantic_points(vis_places, scale_mods = [6], show_duration = 1000, semantic_class="flatspace")
-
-    # visualize_places_semantic_points(vis_places, scale_mods = [1], show_duration = 1000, semantic_class="obstacles")
-
-    # while True:
-    #     pass
-
-    # visualize_places_semantic_points(monolith.reference_map.places, scale_mods = [1], show_duration = 20)
-
-    # monolith.reference_map.visualize(show_conns = False,show_entropies = True)
 
 
