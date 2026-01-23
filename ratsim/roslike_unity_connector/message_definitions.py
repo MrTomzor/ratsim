@@ -98,6 +98,30 @@ class MapGenTemplate2D(Message):
         self.growableMask = growableMask
 
 
+class WildfireWorldGenMessage(Message):
+    def __init__(self, seed: int = None, numAgents: int = None, startAndGoalClearingDistance: float = None, arenaWidth: int = None, arenaHeight: int = None, treeDensity: float = None, topology: str = None, treesSwayingFactor: float = None, debrisTriggerzoneSpawnFrequency: float = None, debrisGroupSizeModifier: float = None, carRoadSpawnFrequency: float = None, carVelocityMin: float = None, carVelocityMax: float = None, fireSpawnFrequency: float = None, fireGlobalSpreadModifier: float = None, fireSmokeGenerationModifier: float = None, fireSpreadsAcrossGround: bool = None, staticWindXVel: float = None, staticWindYVel: float = None, windFluctuationModifier: float = None):
+        self.seed = seed
+        self.numAgents = numAgents
+        self.startAndGoalClearingDistance = startAndGoalClearingDistance
+        self.arenaWidth = arenaWidth
+        self.arenaHeight = arenaHeight
+        self.treeDensity = treeDensity
+        self.topology = topology
+        self.treesSwayingFactor = treesSwayingFactor
+        self.debrisTriggerzoneSpawnFrequency = debrisTriggerzoneSpawnFrequency
+        self.debrisGroupSizeModifier = debrisGroupSizeModifier
+        self.carRoadSpawnFrequency = carRoadSpawnFrequency
+        self.carVelocityMin = carVelocityMin
+        self.carVelocityMax = carVelocityMax
+        self.fireSpawnFrequency = fireSpawnFrequency
+        self.fireGlobalSpreadModifier = fireGlobalSpreadModifier
+        self.fireSmokeGenerationModifier = fireSmokeGenerationModifier
+        self.fireSpreadsAcrossGround = fireSpreadsAcrossGround
+        self.staticWindXVel = staticWindXVel
+        self.staticWindYVel = staticWindYVel
+        self.windFluctuationModifier = windFluctuationModifier
+
+
 
 
 MESSAGE_TYPE_REGISTRY = {
@@ -127,5 +151,7 @@ MESSAGE_TYPE_REGISTRY = {
     "CameraIntrinsicsMessage": CameraIntrinsicsMessage,
 
     "MapGenTemplate2D": MapGenTemplate2D,
+
+    "WildfireWorldGenMessage": WildfireWorldGenMessage,
 
 }

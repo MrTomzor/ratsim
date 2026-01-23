@@ -72,7 +72,7 @@ def convert_csharp_to_python(csharp_code: str):
 
 # === Example usage ===
 if __name__ == "__main__":
-    in_filename = "../../RatsimUnityProject/Assets/TCPConnector/MessageDefs.cs"
+    in_filename = "/home/tom/git/ratsim_unity_project/RatsimUnityProject/Assets/TCPConnector/MessageDefs.cs"
     if len(sys.argv) > 1:
         in_filename = sys.argv[1]
 
