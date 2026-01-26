@@ -222,7 +222,8 @@ class RoslikeUnityConnector:
         #     print(f"[Timing] Total read:       {(envelopeend - readstart):.4f} s")
         #     print("BUFFERLEN: " + str(strlen))
 
-        return 0
+        # Return the dict by default
+        return self.get_all_received_messages_and_topics_dict()
 
     def get_received_messages(self, topic: str):
         # Return list of all messages received on the specified topic
@@ -233,6 +234,7 @@ class RoslikeUnityConnector:
         return messages
 
     def get_all_received_messages_and_topics_dict(self):
+
         # Return list of all messages received on the specified topic
         res = {}
         for i, top in enumerate(self.receive_messages_topics):
