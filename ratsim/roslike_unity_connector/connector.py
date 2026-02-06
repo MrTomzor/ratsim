@@ -25,6 +25,8 @@ class RoslikeUnityConnector:
 
         self.send_buffer = b""
 
+        self.recv_buffer = ""
+
         pass
 
     def connect(self):
@@ -124,20 +126,10 @@ class RoslikeUnityConnector:
         self.queued_messages.clear()
         self.queued_messages_topics.clear()
 
-    def read_messages_from_unity(self):
+    def read_messages_from_unity_old(self):
         # Clear the received messages
         self.received_messages.clear()
         self.receive_messages_topics.clear()
-
-        # Read JSON msgs
-        # buffer = b""
-        # while True:
-        #     chunk = self.sock.recv(4096)
-        #     if not chunk:
-        #         break
-        #     buffer += chunk
-        #     if b"\n" in buffer:
-        #         break
 
         readstart = time.time()
 
@@ -166,18 +158,6 @@ class RoslikeUnityConnector:
                 continue
             # Inner break triggered
             break
-
-        # while True:
-        #     chunk = None
-        #     ready = select.select([self.sock], [], [], self.timeout_seconds)
-        #     if ready[0]:
-        #         chunk = self.sock.recv(4096)
-        #     else:
-        #         was_timeout = True
-        #         break
-        #     buffer += chunk
-        #     if b"\n" in buffer:
-        #         break
 
         if was_timeout:
             print("Timeout waiting for data from Unity.")
@@ -223,6 +203,100 @@ class RoslikeUnityConnector:
         #     print("BUFFERLEN: " + str(strlen))
 
         # Return the dict by default
+        return self.get_all_received_messages_and_topics_dict()
+
+    def read_messages_from_unity(self):
+        # Clear previously received messages
+        self.received_messages.clear()
+        self.receive_messages_topics.clear()
+    
+        readstart = time.time()
+        was_timeout = False
+    
+        # --- READ FROM SOCKET ---
+        while True:
+            events = self.selector.select(timeout=self.timeout_seconds)
+    
+            if not events:
+                was_timeout = True
+                break
+    
+            got_data = False
+    
+            for key, mask in events:
+                if mask & selectors.EVENT_READ:
+                    chunk = key.fileobj.recv(4096)
+    
+                    if not chunk:
+                        was_timeout = True
+                        break
+    
+                    got_data = True
+    
+                    # Append to persistent buffer
+                    decoded = chunk.decode("utf-8-sig")
+                    self.recv_buffer += decoded
+    
+            if was_timeout:
+                break
+    
+            # If we received at least one newline, we likely have full message(s)
+            if "\n" in self.recv_buffer:
+                break
+    
+            # Otherwise keep reading until timeout or newline
+    
+        if was_timeout and "\n" not in self.recv_buffer:
+            print("Timeout waiting for data from Unity.")
+            return 1
+    
+        readend = time.time()
+    
+        # --- PARSE ALL COMPLETE JSON MESSAGES ---
+        parsed_any = False
+    
+        while "\n" in self.recv_buffer:
+            line, self.recv_buffer = self.recv_buffer.split("\n", 1)
+            line = line.strip()
+    
+            if not line:
+                continue
+    
+            parsed_any = True
+    
+            try:
+                response = json.loads(line)
+            except json.JSONDecodeError as e:
+                print("\n=== BAD JSON FROM UNITY ===")
+                print(repr(line[:1000]))
+                print("===========================\n")
+                raise e
+    
+            # Convert each message in response
+            for msg in response["messages"]:
+                envelope = self.message_from_dict(msg)
+    
+                if self.verbose:
+                    print(f"Received message: {envelope.topic} ({envelope.type})")
+                    if isinstance(envelope.data, Message):
+                        print(f"Data: {envelope.data.__dict__}")
+    
+                self.received_messages.append(envelope.data)
+                self.receive_messages_topics.append(envelope.topic)
+    
+        if not parsed_any:
+            # We got data but no newline yet — wait for rest next call
+            return {}
+    
+        envelopeend = time.time()
+    
+        # --- STATS ---
+        dt = time.time() - self.msg_sendtime if hasattr(self, "msg_sendtime") else 1e-6
+        strlen = len(self.recv_buffer)
+    
+        self.last_frame_fps = 1 / dt if dt > 0 else 0
+        self.last_frame_bw = strlen / dt if dt > 0 else 0
+    
         return self.get_all_received_messages_and_topics_dict()
 
     def get_received_messages(self, topic: str):
