@@ -296,6 +296,13 @@ class RoslikeUnityConnector:
     
         self.last_frame_fps = 1 / dt if dt > 0 else 0
         self.last_frame_bw = strlen / dt if dt > 0 else 0
+
+        #debug cols
+        # if "/collisions" in self.receive_messages_topics:
+        #     print("COLS received: " + str(len(self.get_received_messages("/collisions"))))
+
+        # if not "/sim_control/step_finished" in self.receive_messages_topics:
+        #     print("Warning: step_finished message not received this frame!!!")
     
         return self.get_all_received_messages_and_topics_dict()
 
