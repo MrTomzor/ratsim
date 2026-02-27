@@ -44,7 +44,7 @@ if __name__ == "__main__":
             last_obsv, done = sim.step({"/cmd_vel": [twistmsg]})
             navbag.add_step_msgs(last_obsv)
 
-            # print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
+            # print("Publishing twist message:", twistmsg.linear_x, twistmsg.linear_y, twistmsg.angular_z)
             # sim.conn.log_connection_stats()
 
         # Save bag

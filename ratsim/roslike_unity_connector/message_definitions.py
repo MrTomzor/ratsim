@@ -58,11 +58,25 @@ class VisualPointTrackerMessage(Message):
         self.scaleFactor = scaleFactor
 
 
-class Twist2DMessage(Message):
-    def __init__(self, forward: float = None, left: float = None, radiansCounterClockwise: float = None):
-        self.forward = forward
-        self.left = left
-        self.radiansCounterClockwise = radiansCounterClockwise
+class PoseMessage(Message):
+    def __init__(self, x: float = None, y: float = None, z: float = None, qx: float = None, qy: float = None, qz: float = None, qw: float = None):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.qx = qx
+        self.qy = qy
+        self.qz = qz
+        self.qw = qw
+
+
+class TwistMessage(Message):
+    def __init__(self, linear_x: float = None, linear_y: float = None, linear_z: float = None, angular_x: float = None, angular_y: float = None, angular_z: float = None):
+        self.linear_x = linear_x
+        self.linear_y = linear_y
+        self.linear_z = linear_z
+        self.angular_x = angular_x
+        self.angular_y = angular_y
+        self.angular_z = angular_z
 
 
 class RGBDMessage(Message):
@@ -144,7 +158,9 @@ MESSAGE_TYPE_REGISTRY = {
 
     "VisualPointTrackerMessage": VisualPointTrackerMessage,
 
-    "Twist2DMessage": Twist2DMessage,
+    "PoseMessage": PoseMessage,
+
+    "TwistMessage": TwistMessage,
 
     "RGBDMessage": RGBDMessage,
 

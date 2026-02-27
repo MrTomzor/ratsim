@@ -15,8 +15,8 @@ if __name__ == "__main__":
     while True:
         lidarmsg = conn.get_received_messages("/lidar2d")[0]
         twistmsg = reactive_controller.compute_forward_vel_and_angular_vel_for_lidar_msg(lidarmsg)
-        # conn.publish(Twist2DMessage(1, 0, 0), "/cmd_vel")
-        print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
+        # conn.publish(TwistMessage(linear_x=1, linear_y=0, linear_z=0, angular_x=0, angular_y=0, angular_z=0), "/cmd_vel")
+        print("Publishing twist message:", twistmsg.linear_x, twistmsg.linear_y, twistmsg.angular_z)
         conn.publish(twistmsg, "/cmd_vel")
         conn.send_messages_and_step()
         conn.read_messages_from_unity()

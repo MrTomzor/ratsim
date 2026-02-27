@@ -1,5 +1,5 @@
 from roslike_unity_connector.bag import MessageBag
-from roslike_unity_connector.message_definitions import Twist2DMessage
+from roslike_unity_connector.message_definitions import PoseMessage
 import matplotlib.pyplot as plt
 from nav.utils import *
 import numpy as np
@@ -9,6 +9,8 @@ import time
 import os
 
 def plot_trajs():
+    # TODO - rewrite to have 1st argument be the target pose2D topic
+
     print("Num filenames" + str(len(sys.argv) - 1))
     filenames = sys.argv[1:]
     pose_topic = "/rat1_pose"
@@ -29,8 +31,8 @@ def plot_trajs():
             if pose_topic not in step:
                 continue
             pose_msg = step[pose_topic][0]
-            z.append(pose_msg.forward)
-            x.append(-pose_msg.left)  # Invert left for Unity-style x
+            z.append(pose_msg.x)
+            x.append(-pose_msg.y)  # Invert left for Unity-style x
 
         label = os.path.basename(filename)
         plt.plot(x, z, label=label)
@@ -61,18 +63,18 @@ def plot_traj():
     for step in bag.steps:
         if pose_topic in step.keys():
             pose_msg = step[pose_topic][0]
-            z.append(pose_msg.forward)
-            x.append(-pose_msg.left)
+            z.append(pose_msg.x)
+            x.append(-pose_msg.y)
 
         if pose_topic2 in step.keys():
             pose_msg2 = step[pose_topic2][0]
-            noised_z.append(pose_msg2.forward)
-            noised_x.append(-pose_msg2.left)
+            noised_z.append(pose_msg2.x)
+            noised_x.append(-pose_msg2.y)
 
         if pose_topic in step.keys() and pose_topic2 in step.keys():
             pose_msg = step[pose_topic][0]
             pose_msg2 = step[pose_topic2][0]
-            dist = np.linalg.norm(np.array([pose_msg.forward, -pose_msg.left]) - np.array([pose_msg2.forward, -pose_msg2.left]))
+            dist = np.linalg.norm(np.array([pose_msg.x, -pose_msg.y]) - np.array([pose_msg2.x, -pose_msg2.y]))
             dif += dist
 
     print("Average difference between poses: " + str(dif / len(bag.steps)))
@@ -120,8 +122,8 @@ def plot_data_cont():
         if pose_topic not in step:
             continue
         pose_msg = step[pose_topic][0]
-        z.append(pose_msg.forward)
-        x.append(-pose_msg.left)
+        z.append(pose_msg.x)
+        x.append(-pose_msg.y)
     
         # Draw lidar msg
         rgb_colors = "r"

@@ -51,7 +51,7 @@ if __name__ == "__main__":
                 # mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
                 mapper.visualize_map_dynamic()
 
-        print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
+        print("Publishing twist message:", twistmsg.linear_x, twistmsg.linear_y, twistmsg.angular_z)
         sim.conn.log_connection_stats()
 
         step_count += 1

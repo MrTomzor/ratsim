@@ -1,4 +1,4 @@
-
+# This script reads a C# file containing message class definitions and generates a Python file with equivalent class definitions, including a registry for message types. It uses regular expressions to parse the C# code and convert it into Python syntax.
 
 import sys
 import re

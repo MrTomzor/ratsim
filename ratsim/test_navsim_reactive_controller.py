@@ -25,6 +25,6 @@ if __name__ == "__main__":
             convertRGBDMessageToNumpyFormat(rgbdmsg, visualize=True)
         # lidarmsg = last_obsv["/lidar2d"]
 
-        print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
+        print("Publishing twist message:", twistmsg.linear_x, twistmsg.linear_y, twistmsg.angular_z)
         sim.conn.log_connection_stats()
 

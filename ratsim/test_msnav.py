@@ -235,10 +235,18 @@ if __name__ == "__main__":
     mapgentopic = "/mapgen"
     teleport_topic = "/rat1_teleport"
     print("Sending mapgen message")
-    start_pose_msg = Twist2DMessage()
-    start_pose_msg.forward = start_z
-    start_pose_msg.left = -start_x
-    start_pose_msg.radiansCounterClockwise = start_rot
+    start_pose_msg = PoseMessage()
+    start_pose_msg.x = start_z
+    start_pose_msg.y = -start_x
+    start_pose_msg.z = 0
+    qx, qy, qz, qw = 0, 0, 0, 1
+    import math
+    qz = math.sin(start_rot / 2)
+    qw = math.cos(start_rot / 2)
+    start_pose_msg.qx = qx
+    start_pose_msg.qy = qy
+    start_pose_msg.qz = qz
+    start_pose_msg.qw = qw
     last_obsv, done = sim.step({mapgentopic: [mapgenmsg], teleport_topic : [start_pose_msg]})
 
     # rgbd_topic = "/rgbd"
@@ -274,11 +282,12 @@ if __name__ == "__main__":
 
         if lidar_topic in last_obsv and pose_topic in last_obsv:
             # Update robot pose
-            pose_twistmsg = last_obsv[pose_topic][0]
+            pose_msg = last_obsv[pose_topic][0]
             robotpose = np.eye(4)
-            robotpose[1, 3] = pose_twistmsg.forward
-            robotpose[0, 3] = -pose_twistmsg.left
-            robotpose[0:3, 0:3] = rotation_matrix_from_rot_around_z(pose_twistmsg.radiansCounterClockwise)
+            robotpose[1, 3] = pose_msg.x
+            robotpose[0, 3] = -pose_msg.y
+            yaw = 2 * np.arctan2(pose_msg.qz, pose_msg.qw)
+            robotpose[0:3, 0:3] = rotation_matrix_from_rot_around_z(yaw)
 
             # Update local mapper
             mapper.process_ratsim_msgs(last_obsv[lidar_topic][0], last_obsv[pose_topic][0])
@@ -333,7 +342,7 @@ if __name__ == "__main__":
                         filename = savedir + name + "_" + str(step_count) + ".png"
                         plt.imsave(filename, img)
 
-        print("Publishing twist message:", twistmsg.forward, twistmsg.left, twistmsg.radiansCounterClockwise)
+        print("Publishing twist message:", twistmsg.linear_x, twistmsg.linear_y, twistmsg.angular_z)
         sim.conn.log_connection_stats()
 
         step_count += 1
