@@ -6,6 +6,7 @@ _PRESETS_DIR = os.path.dirname(os.path.abspath(__file__))
 CATEGORIES = {
     "world": "world_presets",
     "agents": "agents_presets",
+    "task": "task_presets",
 }
 
 

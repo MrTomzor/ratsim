@@ -2,5 +2,6 @@
   "prefab_name": "SphereAgent",
   "name_prefix": "agent1",
   "sensors": "rgbd, odom",
-  "actuators": "velocity"
+  "actuators": "velocity",
+  "max_health": 100.0
 }

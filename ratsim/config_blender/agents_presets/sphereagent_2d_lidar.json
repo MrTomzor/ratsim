@@ -2,5 +2,6 @@
   "prefab_name": "SphereAgent",
   "name_prefix": "rat1",
   "sensors": "lidar2d, odom, collision, relative_pose",
-  "actuators": "velocity"
+  "actuators": "velocity",
+  "max_health": 100.0
 }
