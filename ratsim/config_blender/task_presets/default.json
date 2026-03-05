@@ -12,7 +12,7 @@
     "min_col_velocity": 1.0
   },
   "termination_settings": {
-    "terminate_on_collision": true,
+    "terminate_on_collision": false,
     "collision_termination_reward": 0.0,
     "terminate_on_zero_battery": true,
     "zero_battery_termination_reward": 0.0,
