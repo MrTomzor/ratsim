@@ -43,7 +43,9 @@
 
   "reward_objects/prefab_name": "reward_obj1",
   "reward_objects/uniform_density": "0.001",
-  "reward_objects/allowed_structures": "house_basic",
+  "reward_objects/allowed_structures": "house_basic, house_mall",
   "reward_objects/house_basic/spawn_probability": "1",
-  "reward_objects/house_basic/skip_probability": "0.2"
+  "reward_objects/house_basic/skip_probability": "0.2",
+  "reward_objects/house_mall/spawn_probability": "1",
+  "reward_objects/house_mall/skip_probability": "0"
 }
