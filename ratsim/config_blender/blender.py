@@ -1,6 +1,8 @@
 import json
 import os
 
+import yaml
+
 _PRESETS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CATEGORIES = {
@@ -11,13 +13,13 @@ CATEGORIES = {
 
 
 def load_preset(category: str, name: str) -> dict:
-    """Load a single JSON preset file by category and name, return as dict."""
+    """Load a single YAML preset file by category and name, return as dict."""
     subdir = CATEGORIES.get(category)
     if subdir is None:
         raise ValueError(f"Unknown preset category '{category}'. Valid: {list(CATEGORIES.keys())}")
-    path = os.path.join(_PRESETS_DIR, subdir, f"{name}.json")
+    path = os.path.join(_PRESETS_DIR, subdir, f"{name}.yaml")
     with open(path) as f:
-        return json.load(f)
+        return yaml.safe_load(f) or {}
 
 
 def blend_presets(category: str, names: list[str]) -> dict:

@@ -16,7 +16,7 @@ authors = [
 
 dependencies = [
     "numpy",
-    # add others as needed (e.g. pyyaml, msgpack, etc.)
+    "pyyaml",
 ]
 
 classifiers = [
