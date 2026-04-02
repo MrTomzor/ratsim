@@ -12,15 +12,15 @@
 
   "world_bounds/width": 50,
   "world_bounds/height": 50,
-  "world_bounds/structures_margin": 10,
+  "world_bounds/structures_margin": 20,
   "world_bounds/boundary_type": "visible_wall",
-  "world_bounds/boundary_height": 50,
+  "world_bounds/boundary_height": 20,
 
   "layout/structures/house_basic/min": 1,
   "layout/structures/house_basic/max": 1,
   "layout/structures/types": "house_basic",
 
-  "agents_spawn_pos": "random",
+  "agents_spawn_pos": "outside_structures",
 
   "house/allowed_door_prefabs": "door1",
   "house/door1/probability": "1",
