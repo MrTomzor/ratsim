@@ -25,5 +25,5 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[tool.setuptools]
-packages = ["ratsim"]
+[tool.setuptools.packages.find]
+include = ["ratsim*"]

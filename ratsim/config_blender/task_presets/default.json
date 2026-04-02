@@ -1,5 +1,5 @@
 {
-  "episode_max_steps": 300,
+  "episode_max_steps": 1000,
   "foraging_settings": {
     "reward_object_pickup_modifier": 1.0,
     "negative_pickups_modifier": 1.0

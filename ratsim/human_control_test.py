@@ -109,17 +109,17 @@ def run_human_session(
 
 def main():
     parser = argparse.ArgumentParser(description="Run simulator in human control mode")
-    parser.add_argument("--world_preset", default="default")
-    parser.add_argument("--agent_preset", default="sphereagent_2d_lidar")
-    parser.add_argument("--task_preset", default="default")
+    parser.add_argument("--world", default="default")
+    parser.add_argument("--agent", default="sphereagent_2d_lidar")
+    parser.add_argument("--task", default="default")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--rtf", type=float, default=1.0,
                         help="Real-time factor. 1.0 = real-time, 0.5 = half speed, 2.0 = double speed")
     args = parser.parse_args()
 
-    world_config = blend_presets("world", [args.world_preset])
-    agent_config = blend_presets("agents", [args.agent_preset])
-    task_config = blend_presets("task", [args.task_preset])
+    world_config = blend_presets("world", [args.world])
+    agent_config = blend_presets("agents", [args.agent])
+    task_config = blend_presets("task", [args.task])
 
     conn = RoslikeUnityConnector(verbose=False)
     conn.connect()
@@ -133,7 +133,7 @@ def main():
     conn.send_messages_and_step(enable_physics_step=False)
     conn.read_messages_from_unity()
 
-    print(f"World: {args.world_preset}, Agent: {args.agent_preset}, Task: {args.task_preset}")
+    print(f"World: {args.world}, Agent: {args.agent}, Task: {args.task}")
 
     episode = 0
     try:
