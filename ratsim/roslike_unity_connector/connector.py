@@ -9,7 +9,7 @@ import selectors
 
 
 class RoslikeUnityConnector:
-    def __init__(self, host_ip = '127.0.0.1', port = 9000, verbose = True) -> None:
+    def __init__(self, host_ip = '127.0.0.1', port = 9000, verbose = False) -> None:
         self.host_ip = host_ip
         self.port = port
         self.verbose = verbose
