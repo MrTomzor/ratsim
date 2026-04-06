@@ -42,6 +42,11 @@ class BoolMessage(Message):
         self.data = data
 
 
+class FloatArrayMessage(Message):
+    def __init__(self, data: List[float] = None):
+        self.data = data
+
+
 class Lidar2DMessage(Message):
     def __init__(self, ranges: List[float] = None, descriptors: List[float] = None, angleIncrementDeg: int = None, angleStartDeg: int = None, maxRange: float = None):
         self.ranges = ranges
@@ -153,6 +158,8 @@ MESSAGE_TYPE_REGISTRY = {
     "Float32Message": Float32Message,
 
     "BoolMessage": BoolMessage,
+
+    "FloatArrayMessage": FloatArrayMessage,
 
     "Lidar2DMessage": Lidar2DMessage,
 

@@ -28,7 +28,7 @@ python record_human_trajectory.py output.pickle   # Record trajectory
 
 ### Core: `ratsim/roslike_unity_connector/`
 - **`connector.py`** — `RoslikeUnityConnector` class: TCP socket client using non-blocking I/O (`selectors`). Handles JSON message serialization over newline-delimited protocol. Key methods: `connect()`, `publish()`, `send_messages_and_step()`, `read_messages_from_unity()`.
-- **`message_definitions.py`** — Auto-generated message dataclasses (from C# via `generate_python_msgs.py`). Types include `PoseMessage`, `TwistMessage`, `Lidar2DMessage`, `RGBDMessage`, `MapGenTemplate2D`, etc. All registered in `MESSAGE_TYPE_REGISTRY` for dynamic dispatch.
+- **`message_definitions.py`** — Auto-generated message dataclasses (from C# via `generate_python_msgs.py`). Types include `PoseMessage`, `TwistMessage`, `Lidar2DMessage`, `FloatArrayMessage`, `RGBDMessage`, `MapGenTemplate2D`, etc. All registered in `MESSAGE_TYPE_REGISTRY` for dynamic dispatch.
 - **`message_envelope.py`** — Wrapper for message serialization.
 - **`bag.py`** — `MessageBag` for recording/replaying simulation steps (pickle format).
 

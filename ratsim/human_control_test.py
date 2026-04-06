@@ -15,6 +15,7 @@ import time
 from ratsim.roslike_unity_connector.connector import RoslikeUnityConnector
 from ratsim.roslike_unity_connector.message_definitions import (
     BoolMessage,
+    Float32Message,
     StringMessage,
 )
 from ratsim.config_blender import blend_presets, to_entries_json
@@ -75,6 +76,9 @@ def run_human_session(
 
         step_count += 1
         tracker.update_with_unity_msgs(msgs)
+
+        # Send step score back to Unity for UI visualization
+        conn.publish(Float32Message(data=tracker.get_this_step_score()), "/step_score")
 
         terminated = tracker.is_terminated()
         truncated = max_steps > 0 and step_count >= max_steps
@@ -140,8 +144,9 @@ def main():
         while True:
             episode += 1
             print(f"\n{'='*60}")
-            print(f"Episode {episode}. Press Enter to start (Ctrl+C to quit)...")
-            input()
+            # print(f"Episode {episode}. Press Enter to start (Ctrl+C to quit)...")
+            print(f"Episode {episode}")
+            # input()
 
             result = run_human_session(conn, world_config, agent_config, task_config, seed=args.seed, rtf=args.rtf, max_steps=0)
             print(f"\nResults: {result}")
