@@ -19,4 +19,4 @@ termination_settings:
   terminate_on_zero_health: true
   zero_health_termination_reward: 0.0
   terminate_on_all_rewards_collected: true
-  all_rewards_collected_termination_reward: 0.0
+  all_rewards_collected_termination_reward: 10.0
