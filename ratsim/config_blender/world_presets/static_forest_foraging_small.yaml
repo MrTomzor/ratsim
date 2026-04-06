@@ -2,29 +2,29 @@ seed: 42
 chunk_width: 128
 
 vegetation/allowed_prefabs: tree1
-vegetation/tree1/density: 0.01
+vegetation/tree1/density: 0.003
 
 height_generation/mode: superflat
 height_generation/superflat_height: 0
 house_generation/mode: uniform
-house_generation/allowed_prefabs: "house1_small, mall1"
+house_generation/allowed_prefabs: ""
 
-world_bounds/width: 2000
-world_bounds/height: 2000
-world_bounds/structures_margin: 200
+world_bounds/width: 100
+world_bounds/height: 100
+world_bounds/structures_margin: 100
 world_bounds/boundary_type: visible_wall
-world_bounds/boundary_height: 50
+world_bounds/boundary_height: 20
 
-city/layout_mode: grid
+city/layout_mode: random
 
-layout/structures/city/min: 1
-layout/structures/city/max: 2
+layout/structures/city/min: 0
+layout/structures/city/max: 0
 layout/structures/village/min: 0
 layout/structures/village/max: 0
 layout/structures/orchard/min: 0
-layout/structures/orchard/max: 3
+layout/structures/orchard/max: 0
 layout/structures/farm/min: 0
-layout/structures/farm/max: 3
+layout/structures/farm/max: 0
 layout/structures/types: "city, village, orchard, farm"
 layout/roads/mode: highway
 
@@ -34,16 +34,16 @@ house/allowed_door_prefabs: "door1,door2"
 house/door1/probability: "0"
 house/door2/probability: "0"
 house/enable_roofs: "0"
-house/chance_wall_broken: "0.7"
+house/chance_wall_broken: "0"
 house/rubble_prefab: rubble_dense_small
 house/clutter_density: "0.5"
 house/allowed_car_prefabs: car1
-house/car_spawn_chance: "0.5"
+house/car_spawn_chance: "0"
 
 reward_objects/prefab_name: reward_obj1
 reward_objects/uniform_density: "0.001"
 reward_objects/allowed_structures: "house_basic, house_mall"
 reward_objects/house_basic/spawn_probability: "1"
-reward_objects/house_basic/skip_probability: "0.2"
+reward_objects/house_basic/skip_probability: "0"
 reward_objects/house_mall/spawn_probability: "1"
 reward_objects/house_mall/skip_probability: "0"

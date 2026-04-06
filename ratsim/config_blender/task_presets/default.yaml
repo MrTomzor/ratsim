@@ -1,11 +1,11 @@
-episode_max_steps: 1000
+episode_max_steps: 2000
 
 foraging_settings:
   reward_object_pickup_modifier: 1.0
   negative_pickups_modifier: 1.0
 
 collision_settings:
-  penalize_collisions: true
+  penalize_collisions: false
   penalization_variable: velocity
   collision_penalty_modifier: 0.0
   collision_flat_penalty: 20.0
