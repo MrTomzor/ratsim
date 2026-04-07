@@ -1,5 +1,1 @@
-torch
-torchvision
-scipy
-opencv-python
-scikit-learn
+numpy
