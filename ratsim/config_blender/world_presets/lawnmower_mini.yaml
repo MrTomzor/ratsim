@@ -12,13 +12,16 @@ house_generation/allowed_prefabs: ""
 
 world_bounds/width: 70
 world_bounds/height: 70
-world_bounds/structures_margin: 20
+world_bounds/structures_margin: 5
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
 
-layout/structures/wall50/min: 1
-layout/structures/wall50/max: 1
-layout/structures/types: ""
+# layout/structures/wall50/min: 2
+# layout/structures/wall50/max: 2
+# layout/structures/types: "wall50"
+layout/structures/rock1/min: 3
+layout/structures/rock1/max: 5
+layout/structures/types: "rock1"
 layout/roads/mode: none
 
 agents_spawn_pos: random
@@ -33,8 +36,8 @@ house/clutter_density: "0"
 house/car_spawn_chance: "0"
 
 reward_objects/prefab_name: reward_obj1
-reward_objects/uniform_density: "0.0035"
-reward_objects/boundary_buffer: "10"
+reward_objects/uniform_density: "0.006"
+reward_objects/boundary_buffer: "5"
 reward_objects/allowed_structures: "house_simplest"
 reward_objects/house_simplest/spawn_probability: "1"
 reward_objects/house_simplest/skip_probability: "0"
