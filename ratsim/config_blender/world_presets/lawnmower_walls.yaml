@@ -1,0 +1,40 @@
+seed: 42
+chunk_width: 128
+
+vegetation/allowed_prefabs: tree1
+# vegetation/tree1/density: 0.003
+vegetation/tree1/density: 0.0
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 100
+world_bounds/height: 100
+world_bounds/structures_margin: 20
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+layout/structures/wall50/min: 2
+layout/structures/wall50/max: 5
+layout/structures/types: "wall50"
+layout/roads/mode: none
+
+agents_spawn_pos: random
+
+house/allowed_door_prefabs: "door1,door2"
+house/door1/probability: "0"
+house/door2/probability: "0"
+house/enable_roofs: "0"
+house/chance_wall_broken: "0"
+house/rubble_prefab: rubble_dense_small
+house/clutter_density: "0"
+house/car_spawn_chance: "0"
+
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0.0035"
+reward_objects/boundary_buffer: "10"
+reward_objects/allowed_structures: "house_simplest"
+reward_objects/house_simplest/spawn_probability: "1"
+reward_objects/house_simplest/skip_probability: "0"
