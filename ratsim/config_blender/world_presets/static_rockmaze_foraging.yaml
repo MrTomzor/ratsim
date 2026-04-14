@@ -33,6 +33,16 @@ house/clutter_density: "0.5"
 house/allowed_car_prefabs: car1
 house/car_spawn_chance: "0"
 
+smoke/global_smoke_enabled: "0"
+smoke/2dmode_enabled: "1"
+smoke/3dmode_enabled: "0"
+smoke/default_radius: 20
+smoke/default_density: 0.1
+smoke/corruption_mode: "random_hits"
+# smoke/corruption_mode: "effective_range"
+smoke/effective_range: 6
+smoke/effective_range_variance: 0.5
+
 reward_objects/prefab_name: reward_obj1
 reward_objects/uniform_density: "0.0025"
 reward_objects/boundary_buffer: "30"
