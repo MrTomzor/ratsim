@@ -6,15 +6,15 @@ sensors:
     angleStartDeg: -90
     angleEndDeg: 90
     angleIncrementDeg: 10
-    occlusionRegion: left
-    occlusionDistance: 0.1
+    occlusionRegion: none
+    occlusionDistance: 0.5
   - name: odom
   - name: collision
   - name: relative_pose
   - name: compass
     biasRad: 0.0
 actuators: velocity
-velocity/steeringBias: 1.0
+velocity/steeringBias: 0.0
 velocity/blockLeftTurn: false
 velocity/blockRightTurn: false
 max_health: 100.0
