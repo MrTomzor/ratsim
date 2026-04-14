@@ -1,0 +1,15 @@
+prefab_name: SphereAgent
+name_prefix: rat1
+sensors:
+  - name: lidar2d
+    maxRange: 5.0
+    angleStartDeg: -90
+    angleEndDeg: 90
+    angleIncrementDeg: 10
+    semanticSet: reward_and_boundary_only
+  - name: odom
+  - name: collision
+  - name: relative_pose
+  - name: compass
+actuators: velocity
+max_health: 100.0
