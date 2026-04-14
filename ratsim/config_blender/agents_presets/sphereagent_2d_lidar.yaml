@@ -13,6 +13,11 @@ sensors:
   - name: relative_pose
   - name: compass
     biasRad: 0.0
+  - name: sector_signal
+    channels: reward
+    nSectors: 5
+    sigmaBins: 1.0
+    topicPrefix: /sector_signal
 actuators: velocity
 velocity/steeringBias: 0.0
 velocity/blockLeftTurn: false

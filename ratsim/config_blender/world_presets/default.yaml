@@ -67,6 +67,12 @@ chaotic_walkers/bounded: "0"
 chaotic_walkers/bound_radius: "15"
 chaotic_walkers/inward_bias_strength: "2"
 
+reward_objects/signal_source/enable_probability: "1"
+reward_objects/signal_source/channel: reward
+reward_objects/signal_source/strength: "1"
+reward_objects/signal_source/range: "50"
+reward_objects/signal_source/falloff: linear
+
 reward_objects/prefab_name: reward_obj1
 reward_objects/uniform_density: "0.001"
 reward_objects/allowed_structures: "house_basic, house_mall"
