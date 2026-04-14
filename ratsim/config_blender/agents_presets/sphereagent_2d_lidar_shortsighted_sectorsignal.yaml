@@ -6,6 +6,7 @@ sensors:
     angleStartDeg: -90
     angleEndDeg: 90
     angleIncrementDeg: 10
+    semanticSet: reward_and_boundary_only
   - name: odom
   - name: collision
   - name: relative_pose

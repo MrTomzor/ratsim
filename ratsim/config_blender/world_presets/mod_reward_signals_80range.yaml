@@ -1,0 +1,5 @@
+reward_objects/signal_source/enable_probability: "1"
+reward_objects/signal_source/channel: reward
+reward_objects/signal_source/strength: "1"
+reward_objects/signal_source/range: "80"
+reward_objects/signal_source/falloff: linear
