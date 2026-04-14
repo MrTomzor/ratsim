@@ -50,6 +50,23 @@ smoke/corruption_mode: "effective_range"
 smoke/effective_range: 6
 smoke/effective_range_variance: 0.5
 
+chaotic_walkers/enabled: "0"
+chaotic_walkers/prefab_name: walker_capsule
+chaotic_walkers/density: "0"
+chaotic_walkers/avoidance_probability: "0.5"
+chaotic_walkers/aggression_probability: "0"
+chaotic_walkers/reaction_radius: "5"
+chaotic_walkers/reaction_velocity: "2"
+chaotic_walkers/min_velocity: "0.5"
+chaotic_walkers/max_velocity: "1.5"
+chaotic_walkers/walk_duration_min_sec: "1.0"
+chaotic_walkers/walk_duration_max_sec: "3.0"
+chaotic_walkers/pause_duration_min_sec: "0.5"
+chaotic_walkers/pause_duration_max_sec: "2.0"
+chaotic_walkers/bounded: "0"
+chaotic_walkers/bound_radius: "15"
+chaotic_walkers/inward_bias_strength: "2"
+
 reward_objects/prefab_name: reward_obj1
 reward_objects/uniform_density: "0.001"
 reward_objects/allowed_structures: "house_basic, house_mall"
