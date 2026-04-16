@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Launch a Unity ratsim build on a headless Linux box over SSH.
 #
-# If an NVIDIA driver is present (nvidia-smi works), launches the binary
-# directly — Unity uses EGL through the driver, no X server needed.
-# Otherwise falls back to Xvfb + Mesa llvmpipe software GL.
+# Expects setup_headless_display.sh to have been run once — that sets up a
+# virtual X server on :99 (GPU-backed on NVIDIA, CPU/llvmpipe otherwise).
+# This script just attaches the Unity binary to :99 and waits for port 9000.
 #
 # Usage:
 #   ./start_ratsim_headless.sh /path/to/ForagerSimBuildV1.x86_64 [log_path]
@@ -11,6 +11,7 @@ set -u
 
 BIN=${1:-}
 LOG=${2:-/tmp/ratsim.log}
+DISPLAY_NUM=${DISPLAY_NUM:-:99}
 
 if [[ -z "$BIN" ]]; then
   echo "usage: $0 <path-to-unity-binary> [log_path]"
@@ -25,39 +26,26 @@ if ! command -v ss >/dev/null; then
   exit 2
 fi
 
+if [[ ! -e "/tmp/.X11-unix/X${DISPLAY_NUM#:}" ]]; then
+  echo "no X server on $DISPLAY_NUM — run sudo ./scripts/setup_headless_display.sh first"
+  exit 2
+fi
+
 BIN_BASE=$(basename "$BIN")
 # Match process name only (not full command line) so we don't kill this script,
 # whose argv contains the binary path.
 pkill -9 "${BIN_BASE:0:15}" 2>/dev/null
-pkill -9 Xvfb 2>/dev/null
 sleep 1
 
-if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
-  echo "nvidia driver detected, launching with -force-glcore via EGL (no X server)"
-  # __GLX_VENDOR_LIBRARY_NAME=nvidia ensures glvnd routes GL calls to the
-  # NVIDIA userspace driver. Unity on Linux can create an offscreen EGL
-  # context through it without needing an X display.
-  __GLX_VENDOR_LIBRARY_NAME=nvidia \
-    nohup "$BIN" -force-glcore -logFile "$LOG" >/dev/null 2>&1 &
-  disown
-else
-  if ! command -v xvfb-run >/dev/null; then
-    echo "no nvidia driver and xvfb-run not installed"
-    echo "install with: sudo apt install -y xvfb libgl1-mesa-dri libglu1-mesa"
-    exit 2
-  fi
-  echo "no nvidia driver, falling back to xvfb + llvmpipe software GL"
-  LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe \
-    nohup xvfb-run -a -s "-screen 0 1280x720x24 +extension GLX +render -noreset" \
-    "$BIN" -logFile "$LOG" >/dev/null 2>&1 &
-  disown
-fi
+echo "launching on DISPLAY=$DISPLAY_NUM (log: $LOG)"
+DISPLAY=$DISPLAY_NUM nohup "$BIN" -logFile "$LOG" >/dev/null 2>&1 &
+disown
 
 echo "waiting up to 30s for port 9000..."
 for i in {1..30}; do
   sleep 1
   if ss -tln | grep -q ':9000 '; then
-    echo "TCP server up after ${i}s (log: $LOG)"
+    echo "TCP server up after ${i}s"
     exit 0
   fi
 done
