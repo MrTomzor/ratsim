@@ -24,9 +24,22 @@ UNIT_PATH=/etc/systemd/system/xorg-ratsim.service
 if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
   echo "nvidia driver detected — using GPU-accelerated headless X"
   apt-get update
-  apt-get install -y xserver-xorg-core
+  # X-side nvidia driver is separate from the kernel driver; install explicitly.
+  NVIDIA_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | cut -d. -f1)
+  apt-get install -y xserver-xorg-core "xserver-xorg-video-nvidia-${NVIDIA_VER}" || \
+    apt-get install -y xserver-xorg-core xserver-xorg-video-nvidia
 
-  cat > "$XORG_CONF" <<'EOF'
+  # Find the NVIDIA GPU's PCI bus so Xorg can bind to it on a headless host.
+  PCI=$(lspci -D | awk '/NVIDIA/ {print $1; exit}')
+  if [[ -z "$PCI" ]]; then
+    echo "could not find NVIDIA PCI device"
+    exit 1
+  fi
+  # Convert "0000:00:06.0" to Xorg's "PCI:0:6:0".
+  BUSID=$(echo "$PCI" | awk -F'[:.]' '{printf "PCI:%d:%d:%d", strtonum("0x"$2), strtonum("0x"$3), strtonum("0x"$4)}')
+  echo "using BusID $BUSID"
+
+  cat > "$XORG_CONF" <<EOF
 Section "ServerLayout"
     Identifier "Layout0"
     Screen 0 "Screen0"
@@ -35,8 +48,10 @@ EndSection
 Section "Device"
     Identifier "Device0"
     Driver "nvidia"
-    Option "AllowEmptyInitialConfiguration"
+    BusID "$BUSID"
+    Option "AllowEmptyInitialConfiguration" "true"
     Option "UseDisplayDevice" "none"
+    Option "ConnectedMonitor" "DFP-0"
 EndSection
 
 Section "Screen"
