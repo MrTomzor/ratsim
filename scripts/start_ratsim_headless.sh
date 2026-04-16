@@ -33,8 +33,12 @@ pkill -9 Xvfb 2>/dev/null
 sleep 1
 
 if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
-  echo "nvidia driver detected, launching with -force-vulkan (no X server)"
-  nohup "$BIN" -force-vulkan -logFile "$LOG" >/dev/null 2>&1 &
+  echo "nvidia driver detected, launching with -force-glcore via EGL (no X server)"
+  # __GLX_VENDOR_LIBRARY_NAME=nvidia ensures glvnd routes GL calls to the
+  # NVIDIA userspace driver. Unity on Linux can create an offscreen EGL
+  # context through it without needing an X display.
+  __GLX_VENDOR_LIBRARY_NAME=nvidia \
+    nohup "$BIN" -force-glcore -logFile "$LOG" >/dev/null 2>&1 &
   disown
 else
   if ! command -v xvfb-run >/dev/null; then
