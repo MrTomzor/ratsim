@@ -27,7 +27,10 @@ for cmd in xvfb-run ss; do
   fi
 done
 
-pkill -9 -f ForagerSim 2>/dev/null
+BIN_BASE=$(basename "$BIN")
+# Match process name only (not full command line) so we don't kill this script,
+# whose argv contains the binary path.
+pkill -9 "${BIN_BASE:0:15}" 2>/dev/null
 pkill -9 Xvfb 2>/dev/null
 sleep 1
 
