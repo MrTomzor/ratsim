@@ -52,7 +52,7 @@ reward_objects/allowed_structures: "house_basic, house_simplest, house_mall"
 reward_objects/house_basic/spawn_probability: "0.8"
 reward_objects/house_basic/skip_probability: "0"
 
-reward_objects/house_simplest/spawn_probability: "0.1"
+reward_objects/house_simplest/spawn_probability: "0.15"
 reward_objects/house_simplest/skip_probability: "0"
 
 reward_objects/house_mall/spawn_probability: "0.9"
