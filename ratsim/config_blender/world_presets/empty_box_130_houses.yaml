@@ -12,7 +12,7 @@ house_generation/allowed_prefabs: ""
 
 world_bounds/width: 130
 world_bounds/height: 130
-world_bounds/structures_margin: 10
+world_bounds/structures_margin: 5
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
 
