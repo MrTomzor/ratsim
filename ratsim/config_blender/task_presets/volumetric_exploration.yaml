@@ -1,0 +1,35 @@
+episode_max_steps: 2000
+
+foraging_settings:
+  reward_object_pickup_modifier: 0.0
+  negative_pickups_modifier: 0.0
+
+collision_settings:
+  penalize_collisions: false
+  penalization_variable: velocity
+  collision_penalty_modifier: 0.0
+  collision_flat_penalty: 20.0
+  min_col_velocity: 1.0
+
+termination_settings:
+  terminate_on_collision: false
+  collision_termination_reward: 0.0
+  terminate_on_zero_battery: true
+  zero_battery_termination_reward: 0.0
+  terminate_on_zero_health: true
+  zero_health_termination_reward: 0.0
+  terminate_on_all_rewards_collected: false
+  all_rewards_collected_termination_reward: 0.0
+
+volumetric_exploration_settings:
+  # Reward the agent per m² of newly-explored area (both free and
+  # occupied cells count once they're observed).  Compared against
+  # frontier-explorer baselines in ratsim_ros2.
+  reward_per_m2: 0.01
+  grid_resolution: 1.0
+  visualize: false
+  viz_draw_every: 1
+  # debug: 0 silent, 1 per-step pose/cell/newly_known, 2 also lidar range stats.
+  # Set debug_every to throttle the per-step prints.
+  debug: 0
+  debug_every: 20

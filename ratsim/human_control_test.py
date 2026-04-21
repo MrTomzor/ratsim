@@ -19,6 +19,7 @@ from ratsim.roslike_unity_connector.message_definitions import (
     StringMessage,
 )
 from ratsim.config_blender import blend_presets, to_entries_json
+from ratsim.config_blender.blender import flatten_config
 from ratsim.task_tracker import TaskTracker
 
 
@@ -38,7 +39,16 @@ def run_human_session(
     If max_steps is None, uses the task config's episode_max_steps.
     If max_steps <= 0, the episode runs indefinitely (no truncation).
     """
-    tracker = TaskTracker(task_config)
+    flat_world = flatten_config(world_config)
+    flat_agent = flatten_config(agent_config)
+    agent_prefix = flat_agent.get("name_prefix", "rat1")
+    tracker = TaskTracker(
+        task_config,
+        world_width=float(flat_world["world_bounds/width"]) if "world_bounds/width" in flat_world else None,
+        world_height=float(flat_world["world_bounds/height"]) if "world_bounds/height" in flat_world else None,
+        pose_topic=f"/{agent_prefix}/gt_pose",
+        lidar_topic="/lidar2d",
+    )
     tracker.reset()
 
     # Apply seed if given
@@ -85,9 +95,11 @@ def run_human_session(
 
         if terminated:
             print(f"Episode terminated at step {step_count}: {tracker.get_termination_reason()}")
+            tracker.print_exploration_summary(prefix="end-of-episode")
             break
         if truncated:
             print(f"Episode truncated at step {step_count} (max steps reached)")
+            tracker.print_exploration_summary(prefix="end-of-episode")
             break
 
         elapsed = time.perf_counter() - frame_start
@@ -105,6 +117,7 @@ def run_human_session(
         "total_score": tracker.get_total_score(),
         "objects_found": tracker.get_num_reward_objs_picked_up(),
         "collisions": tracker.get_collision_count(),
+        "explored_area_m2": tracker.get_explored_area_m2(),
         "terminated": terminated,
         "truncated": truncated,
         "termination_reason": tracker.get_termination_reason(),
