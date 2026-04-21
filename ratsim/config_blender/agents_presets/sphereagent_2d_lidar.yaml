@@ -8,6 +8,7 @@ sensors:
     angleIncrementDeg: 10
     occlusionRegion: none
     occlusionDistance: 0.5
+    semanticSet: reward_and_boundary_only
   - name: odom
   - name: collision
   - name: relative_pose

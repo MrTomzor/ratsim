@@ -38,6 +38,12 @@ python record_human_trajectory.py output.pickle   # Record trajectory
 ### Configuration: `ratsim/config_blender/`
 - JSON presets for agents (`agents_presets/`) and worlds (`world_presets/`). Meant to be mixed/applied to configure simulation runs.
 
+### Task Tracking: `ratsim/task_tracker/`
+- **`task_tracker.py`** — `TaskTracker`: single source of truth for per-episode reward + termination + metrics. Consumes Unity msgs (collision, pickup, health, battery, pose, lidar), emits `get_this_step_score()`/`get_total_score()`/`is_terminated()`/`get_termination_reason()`. Topics are matched by suffix so `/collisions` and `/rat1/collisions` both work.
+- **`exploration_tracker.py`** — `ExplorationTracker`: 2D occupancy grid (nav_msgs convention: -1 unknown / 0 free / 100 occupied), axis-aligned, centered on world origin. `update_from_lidar()` ray-casts via Bresenham, marks free/occupied cells and returns stats (`newly_known`, `rays_total`, `rays_out_of_bounds`, `rays_zero_len`, `agent_in_bounds`). `to_rgb_image()` renders the grid rotated/flipped to match Unity's top-down view (ROS +x / Unity +Z = top, ROS +y / Unity -X = left).
+- **Exploration reward** is driven by TaskTracker when `volumetric_exploration_settings` is present in the task config: each step's newly-known cell area × `reward_per_m2` is added to the step score. Config keys: `reward_per_m2`, `grid_resolution` (m/cell), `visualize` (bool — live matplotlib viewer), `debug` (0/1/2 verbosity), `debug_every` (print period).
+- **Pose topic for exploration**: the tracker subscribes to the agent's ground-truth pose (`/<name_prefix>/gt_pose`, published by `AbsolutePose2DSensor` which AgentLoader force-enables regardless of the user's `sensors` config — this sensor is not exposed as an RL observation, it's infrastructure). The lidar angle convention differs between Unity (`sin(θ), 0, cos(θ)`, CW from +Z) and ROS math (CCW from +x), so the tracker negates `angleStartDeg`/`angleIncrementDeg` when converting to radians — without this the occupied hits get mirrored left↔right around the agent.
+
 ### Deprecated: `ratsim/nav_DEPRECATED/`
 Legacy navigation module (noise models, reactive controller, occupancy mapping). Being phased out.
 
