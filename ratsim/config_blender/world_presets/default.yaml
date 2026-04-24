@@ -16,6 +16,12 @@ world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 50
 
 city/layout_mode: grid
+# Which house prefabs cities may spawn (must exist in Resources/WorldGen/WorldStructurePrefabs/
+# and start with "house"). Empty string = use all discovered house* prefabs.
+city/allowed_houses: "house_basic, house_simplest"
+# Per-prefab relative spawn weight (default 1). 0 disables that prefab.
+city/house_basic/probability: "1"
+city/house_simplest/probability: "1"
 
 layout/structures/city/min: 1
 layout/structures/city/max: 2
