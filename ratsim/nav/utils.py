@@ -75,6 +75,11 @@ def lidar2d_to_pointcloud(lidar_msg: Lidar2DMessage) -> np.ndarray:
 
     return np.stack((forward, left), axis=-1)  # Shape: (N, 2)
 
+def has_depth(msg: RGBDMessage) -> bool:
+    """True iff the message carries a depth image (sensor was configured with captureDepth=true)."""
+    return bool(getattr(msg, "depthImageBase64", None))
+
+
 def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
     print("MSG:")
     print(msg)
@@ -84,29 +89,34 @@ def convertRGBDMessageToNumpyFormat(msg: RGBDMessage, visualize: bool = True):
     rgb_image = Image.open(io.BytesIO(rgb_bytes)).convert("RGB")
     rgb_np = np.array(rgb_image)
 
-    # Decode 8-bit grayscale depth image
-    print("MSg reported min and max depth:", msg.minDepth, msg.maxDepth)
-    depth_bytes = base64.b64decode(msg.depthImageBase64)
-    # depth_image = Image.open(io.BytesIO(depth_bytes)).convert("L")  # 'L' = 8-bit grayscale
-    # depth_np = np.array(depth_image)
-    # print("depth img min and max:", np.min(depth_np), np.max(depth_np))
-
-    depth_image = Image.open(io.BytesIO(depth_bytes)).convert("RGBA")
-    alpha = np.array(depth_image)[:, :, 3].astype(np.float32) / 255.0
-    depth_np = msg.minDepth + (msg.maxDepth - msg.minDepth) * alpha
-
-    print("Decoded Depth Range:", np.min(depth_np), np.max(depth_np))
+    depth_np = None
+    if has_depth(msg):
+        # Decode 8-bit depth encoded in the alpha channel
+        print("MSg reported min and max depth:", msg.minDepth, msg.maxDepth)
+        depth_bytes = base64.b64decode(msg.depthImageBase64)
+        depth_image = Image.open(io.BytesIO(depth_bytes)).convert("RGBA")
+        alpha = np.array(depth_image)[:, :, 3].astype(np.float32) / 255.0
+        depth_np = msg.minDepth + (msg.maxDepth - msg.minDepth) * alpha
+        print("Decoded Depth Range:", np.min(depth_np), np.max(depth_np))
+    else:
+        print("RGB-only message (no depth).")
 
     if visualize:
-        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
-        axs[0].imshow(rgb_np)
-        axs[0].set_title("RGB Image")
-        axs[0].axis("off")
+        if depth_np is not None:
+            fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+            axs[0].imshow(rgb_np)
+            axs[0].set_title("RGB Image")
+            axs[0].axis("off")
 
-        im = axs[1].imshow(depth_np, cmap='gray')
-        axs[1].set_title("Depth Image (meters)")
-        axs[1].axis("off")
-        plt.colorbar(im, ax=axs[1], shrink=0.6)
+            im = axs[1].imshow(depth_np, cmap='gray')
+            axs[1].set_title("Depth Image (meters)")
+            axs[1].axis("off")
+            plt.colorbar(im, ax=axs[1], shrink=0.6)
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+            ax.imshow(rgb_np)
+            ax.set_title("RGB Image (no depth)")
+            ax.axis("off")
 
         plt.tight_layout()
         plt.show()

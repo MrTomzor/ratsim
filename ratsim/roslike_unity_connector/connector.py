@@ -27,6 +27,8 @@ class RoslikeUnityConnector:
 
         self.recv_buffer = ""
 
+        self.last_frame_recv_bytes = 0
+
         pass
 
     def connect(self):
@@ -209,30 +211,35 @@ class RoslikeUnityConnector:
         # Clear previously received messages
         self.received_messages.clear()
         self.receive_messages_topics.clear()
-    
+
+        # Track raw bytes read from the socket during this call. Reset each call
+        # so callers can read bytes-per-step from last_frame_recv_bytes.
+        self.last_frame_recv_bytes = 0
+
         readstart = time.time()
         was_timeout = False
-    
+
         # --- READ FROM SOCKET ---
         while True:
             events = self.selector.select(timeout=self.timeout_seconds)
-    
+
             if not events:
                 was_timeout = True
                 break
-    
+
             got_data = False
-    
+
             for key, mask in events:
                 if mask & selectors.EVENT_READ:
                     chunk = key.fileobj.recv(4096)
-    
+
                     if not chunk:
                         was_timeout = True
                         break
-    
+
                     got_data = True
-    
+                    self.last_frame_recv_bytes += len(chunk)
+
                     # Append to persistent buffer
                     decoded = chunk.decode("utf-8-sig")
                     self.recv_buffer += decoded
