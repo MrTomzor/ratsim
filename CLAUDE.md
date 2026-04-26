@@ -58,6 +58,52 @@ observations = connector.read_messages_from_unity()
 msgs = connector.get_received_messages("/lidar2d")
 ```
 
+## Unity Instance Launcher (`ratsim/unity_launcher.py`)
+
+`allocate_unity_instances(n_envs, fresh=False)` is the single entry point for
+deciding which Unity port(s) a script should use. Two operational tiers:
+
+1. **Manual / interactive (no `RATSIM_UNITY_BIN`)**: user launches Unity
+   themselves (Editor Play or `start_ratsim_headless.sh`). `n_envs=1` probes
+   port 9000 and reuses it. `n_envs>1` raises with a clear error pointing the
+   user at the env var.
+2. **Auto-spawn (`RATSIM_UNITY_BIN` set)**: launcher can spawn additional
+   instances on demand via `scripts/start_ratsim_headless.sh --port N`.
+   `n_envs=1` still reuses port 9000 if alive (debug-friendly); `n_envs>1`
+   always allocates from `FRESH_PORT_BASE` (9100+) so it can never clobber the
+   persistent debug instance. Spawned instances are killed at process exit
+   via `atexit`.
+
+Port conventions:
+- **9000** — `PERSISTENT_PORT`. Reserved for the long-running interactive
+  instance (Editor Play, manual launches, human control test). Reused, never
+  spawned over.
+- **9100–9199** — `FRESH_PORT_BASE` range. Auto-spawned training instances.
+  Multiple parallel runs should use non-overlapping subranges (e.g. run A on
+  9100–9107, run B on 9110–9117) — pass a different `base_port` per run.
+
+Liveness check (`_instance_alive`) combines a TCP probe with a pidfile read at
+`/tmp/ratsim_<port>.pid` (written by `start_ratsim_headless.sh`). Editor Play
+mode and manual launches won't have a pidfile — port-only is the fallback.
+
+The launcher does not handle SIGTERM/SIGKILL on the parent process — if Python
+dies hard, spawned Unity instances become orphans. Clean up with
+`./scripts/stop_ratsim_headless.sh --all`.
+
+## Headless Launch Scripts (`ratsim/scripts/`)
+
+- **`setup_headless_display.sh`** — one-time `sudo` setup of an Xorg server on
+  `:99` (NVIDIA-backed when available, llvmpipe fallback). Installed as a
+  systemd unit. Re-run only after driver changes.
+- **`start_ratsim_headless.sh [<bin>] [--port N] [--log path] [--force]`** —
+  launches a Unity build attached to `:99` on the given port (default 9000).
+  Writes a pidfile at `/tmp/ratsim_<port>.pid` and per-port log
+  `/tmp/ratsim_<port>.log`. Refuses to clobber a live port unless `--force`.
+  `<bin>` falls back to `$RATSIM_UNITY_BIN`.
+- **`stop_ratsim_headless.sh (--port N | --all | <bin>)`** — pidfile-based
+  shutdown for headless launches; legacy basename match still supported for
+  Editor / manual runs that don't write a pidfile.
+
 ## Topic Naming Conventions
 - Agent-specific: `/rat1_pose`, `/rat1_velocity`, `/rat1_teleport`
 - Sensors: `/lidar2d`, `/rgbd`, `/visual_point_track_pcl`
