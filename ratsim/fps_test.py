@@ -205,6 +205,7 @@ def run_fps_test(
     conn.publish(BoolMessage(data=True), "/sim_control/reset_episode")
     conn.send_messages_and_step(enable_physics_step=True)
     conn.read_messages_from_unity()
+    conn.process_worldgen_status()
 
     viewer = RGBDViewer() if visualize_rgbd else None
     saw_rgbd = False

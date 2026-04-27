@@ -1,0 +1,82 @@
+# Mimics the memory-maze 11x11 task layout:
+# https://github.com/jurgisp/memory-maze (which uses DeepMind labmaze under the hood).
+#
+# Algorithm (MazeLayoutLoader, mode="memory_maze"):
+#   1. Rejection-sample odd-aligned, odd-sized rooms.
+#   2. DFS recursive backtracker fills every remaining odd cell with 1-wide corridors.
+#   3. For every adjacent region pair, knock out exactly one separating wall (mandatory),
+#      then knock out each remaining candidate wall with extra_connection_probability (loops).
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+# 11x11 mask cells * cell_size (3.0) = 33x33 world units. Odd cell count is enforced
+# by the loader; if these dims aren't odd-multiple of cell_size, it shrinks the mask
+# by one cell and a thin floor strip is left at the edges (visible_wall covers it).
+world_bounds/width: 33
+world_bounds/height: 33
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+# ─────────────────────────────────────────────
+#  Layout / maze
+# ─────────────────────────────────────────────
+layout/mode: maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+maze/mode: memory_maze
+
+# Mask resolution. memory-maze uses 1 unit per cell — we use 3 here so corridors are
+# 3 world units wide (a typical agent diameter). cell_size scales the entire maze
+# uniformly without changing the layout structure.
+maze/cell_size: 3.0
+maze/wall_height: 3.0
+
+# Room budget (= labmaze max_rooms). Rejection sampling stops at this count or when
+# room_max_attempts retries are exhausted. memory-maze 11x11 uses 6.
+maze/n_rooms: 6
+
+# memory-maze 11x11 uses room_min_size=3, room_max_size=5. Both are rounded up to odd
+# by this loader if even values are passed. Min must be >=3.
+maze/room_min_size_cells: 3
+maze/room_max_size_cells: 5
+
+# Total retry budget across all room placement attempts (matches labmaze default 1000).
+maze/room_max_attempts: 1000
+
+# Loop density. labmaze default 0.0 = pure tree (one wall opened per region pair).
+# Increase toward 1.0 for densely-connected mazes with many shortcuts.
+maze/extra_connection_probability: 0.0
+
+# 1-cell wall ring around the mask edge.
+maze/border_walls: 1
+
+maze/semantic_name: maze_wall
+
+agents_spawn_pos: random
+
+# ─────────────────────────────────────────────
+#  Reward objects (room-constrained)
+# ─────────────────────────────────────────────
+# memory-maze 11x11 places 4 colored targets, one per room. We approximate with a
+# uniform density confined to room interiors.
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0.01"
+reward_objects/uniform_constrain_to_rooms: "1"
+reward_objects/boundary_buffer: "0"
+reward_objects/allowed_structures: ""
+
+# ─────────────────────────────────────────────
+#  Misc
+# ─────────────────────────────────────────────
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"

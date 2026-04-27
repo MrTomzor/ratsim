@@ -22,8 +22,9 @@ world_bounds/boundary_height: 20
 # layout/structures/house_basic/max: 10
 # layout/structures/types: "house_basic"
 
+layout/max_layout_attempts: 50
 layout/structures/house_simplest/min: 5
-layout/structures/house_simplest/max: 10
+layout/structures/house_simplest/max: 5
 layout/structures/types: "house_simplest"
 
 # layout/structures/house_mall/min: 1
@@ -52,8 +53,11 @@ reward_objects/allowed_structures: "house_basic, house_simplest, house_mall"
 reward_objects/house_basic/spawn_probability: "0.8"
 reward_objects/house_basic/skip_probability: "0"
 
-reward_objects/house_simplest/spawn_probability: "0.15"
-reward_objects/house_simplest/skip_probability: "0"
+
+# reward_objects/house_simplest/spawn_probability: "0.15"
+# reward_objects/house_simplest/skip_probability: "0"
+reward_objects/house_simplest/min_per_structure: 4
+reward_objects/house_simplest/max_per_structure: 4
 
 reward_objects/house_mall/spawn_probability: "0.9"
 reward_objects/house_mall/skip_probability: "0"

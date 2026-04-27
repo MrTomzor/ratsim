@@ -117,6 +117,18 @@ class MapGenTemplate2D(Message):
         self.growableMask = growableMask
 
 
+class WorldGenStatusMessage(Message):
+    """Status report from Unity world generation.
+
+    severity is one of: "info", "warning", "error".
+    source identifies the originating subsystem (e.g. "WorldLayoutLoader").
+    """
+    def __init__(self, severity: str = None, source: str = None, message: str = None):
+        self.severity = severity
+        self.source = source
+        self.message = message
+
+
 class WildfireWorldGenMessage(Message):
     def __init__(self, seed: int = None, numAgents: int = None, startAndGoalClearingDistance: float = None, arenaWidth: int = None, arenaHeight: int = None, treeDensity: float = None, topology: str = None, treesSwayingFactor: float = None, debrisTriggerzoneSpawnFrequency: float = None, debrisGroupSizeModifier: float = None, carRoadSpawnFrequency: float = None, carVelocityMin: float = None, carVelocityMax: float = None, fireSpawnFrequency: float = None, fireGlobalSpreadModifier: float = None, fireSmokeGenerationModifier: float = None, fireSpreadsAcrossGround: bool = None, staticWindXVel: float = None, staticWindYVel: float = None, windFluctuationModifier: float = None):
         self.seed = seed
@@ -174,6 +186,8 @@ MESSAGE_TYPE_REGISTRY = {
     "CameraIntrinsicsMessage": CameraIntrinsicsMessage,
 
     "MapGenTemplate2D": MapGenTemplate2D,
+
+    "WorldGenStatusMessage": WorldGenStatusMessage,
 
     "WildfireWorldGenMessage": WildfireWorldGenMessage,
 

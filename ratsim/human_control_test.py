@@ -10,7 +10,11 @@ When imported, use run_human_session() directly.
 """
 
 import argparse
+import select
+import sys
+import termios
 import time
+import tty
 
 from ratsim.roslike_unity_connector.connector import RoslikeUnityConnector
 from ratsim.roslike_unity_connector.message_definitions import (
@@ -21,6 +25,39 @@ from ratsim.roslike_unity_connector.message_definitions import (
 from ratsim.config_blender import blend_presets, to_entries_json
 from ratsim.config_blender.blender import flatten_config
 from ratsim.task_tracker import TaskTracker
+
+
+class _CbreakStdin:
+    """Context manager that puts stdin in cbreak mode so single keypresses can be
+    polled non-blockingly via read_key(). Restores terminal settings on exit.
+
+    Falls back to a no-op when stdin is not a TTY (e.g. piped input, headless run).
+    """
+
+    def __init__(self):
+        self._fd = None
+        self._old_attrs = None
+
+    def __enter__(self):
+        if not sys.stdin.isatty():
+            return self
+        self._fd = sys.stdin.fileno()
+        self._old_attrs = termios.tcgetattr(self._fd)
+        tty.setcbreak(self._fd)
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self._fd is not None and self._old_attrs is not None:
+            termios.tcsetattr(self._fd, termios.TCSADRAIN, self._old_attrs)
+
+    def read_key(self):
+        """Return one character if available, else None. Never blocks."""
+        if self._fd is None:
+            return None
+        ready, _, _ = select.select([sys.stdin], [], [], 0)
+        if not ready:
+            return None
+        return sys.stdin.read(1)
 
 
 def run_human_session(
@@ -61,11 +98,13 @@ def run_human_session(
     conn.publish(BoolMessage(data=True), "/sim_control/reset_episode")
     conn.send_messages_and_step(enable_physics_step=True)
     conn.read_messages_from_unity()
+    conn.process_worldgen_status()
 
     # Let worldgen settle
     conn.publish(BoolMessage(data=True), "/enable_human_control")
     conn.send_messages_and_step(enable_physics_step=True)
     conn.read_messages_from_unity()
+    conn.process_worldgen_status()
 
     # Episode loop — Python just ticks the sim and reads metrics,
     # Unity handles human input directly.
@@ -77,35 +116,60 @@ def run_human_session(
         max_steps = tracker.episode_max_steps
 
     print(f"Human control active. Max steps: {max_steps if max_steps > 0 else 'unlimited'}, RTF: {rtf}")
+    print("Hotkeys (in this terminal): R = reload world with seed+1, Q = quit")
 
-    while True:
-        frame_start = time.perf_counter()
+    reload_requested = False
+    quit_requested = False
+    with _CbreakStdin() as kb:
+        while True:
+            frame_start = time.perf_counter()
 
-        conn.send_messages_and_step(enable_physics_step=True)
-        msgs = conn.read_messages_from_unity()
+            conn.send_messages_and_step(enable_physics_step=True)
+            msgs = conn.read_messages_from_unity()
 
-        step_count += 1
-        tracker.update_with_unity_msgs(msgs)
+            step_count += 1
+            tracker.update_with_unity_msgs(msgs)
 
-        # Send step score back to Unity for UI visualization
-        conn.publish(Float32Message(data=tracker.get_this_step_score()), "/step_score")
+            # Send step score back to Unity for UI visualization
+            conn.publish(Float32Message(data=tracker.get_this_step_score()), "/step_score")
 
-        terminated = tracker.is_terminated()
-        truncated = max_steps > 0 and step_count >= max_steps
+            if step_count % 100 == 0:
+                print(f"  step {step_count} | score={tracker.get_total_score():.3f} "
+                      f"| pickups={tracker.get_num_reward_objs_picked_up()} "
+                      f"| collisions={tracker.get_collision_count()}")
 
-        if terminated:
-            print(f"Episode terminated at step {step_count}: {tracker.get_termination_reason()}")
-            tracker.print_exploration_summary(prefix="end-of-episode")
-            break
-        if truncated:
-            print(f"Episode truncated at step {step_count} (max steps reached)")
-            tracker.print_exploration_summary(prefix="end-of-episode")
-            break
+            # Drain any pending keypresses; latest non-noop wins this step.
+            while True:
+                ch = kb.read_key()
+                if ch is None:
+                    break
+                if ch in ("r", "R"):
+                    reload_requested = True
+                elif ch in ("q", "Q"):
+                    quit_requested = True
 
-        elapsed = time.perf_counter() - frame_start
-        sleep_time = target_dt - elapsed
-        if sleep_time > 0:
-            time.sleep(sleep_time)
+            terminated = tracker.is_terminated()
+            truncated = max_steps > 0 and step_count >= max_steps
+
+            if reload_requested:
+                print(f"Reload requested at step {step_count} — reloading with seed+1")
+                break
+            if quit_requested:
+                print(f"Quit requested at step {step_count}")
+                break
+            if terminated:
+                print(f"Episode terminated at step {step_count}: {tracker.get_termination_reason()}")
+                tracker.print_exploration_summary(prefix="end-of-episode")
+                break
+            if truncated:
+                print(f"Episode truncated at step {step_count} (max steps reached)")
+                tracker.print_exploration_summary(prefix="end-of-episode")
+                break
+
+            elapsed = time.perf_counter() - frame_start
+            sleep_time = target_dt - elapsed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
     # Disable human control
     conn.publish(BoolMessage(data=False), "/enable_human_control")
@@ -121,6 +185,8 @@ def run_human_session(
         "terminated": terminated,
         "truncated": truncated,
         "termination_reason": tracker.get_termination_reason(),
+        "reload_requested": reload_requested,
+        "quit_requested": quit_requested,
     }
 
 
@@ -153,16 +219,21 @@ def main():
     print(f"World: {args.world}, Agent: {args.agent}, Task: {args.task}")
 
     episode = 0
+    current_seed = args.seed
     try:
         while True:
             episode += 1
             print(f"\n{'='*60}")
-            # print(f"Episode {episode}. Press Enter to start (Ctrl+C to quit)...")
-            print(f"Episode {episode}")
-            # input()
+            print(f"Episode {episode} (seed={current_seed})")
 
-            result = run_human_session(conn, world_config, agent_config, task_config, seed=args.seed, rtf=args.rtf, max_steps=0)
+            result = run_human_session(conn, world_config, agent_config, task_config, seed=current_seed, rtf=args.rtf, max_steps=0)
             print(f"\nResults: {result}")
+
+            if result.get("quit_requested"):
+                break
+            if result.get("reload_requested"):
+                # If no seed was provided, start the increment chain from 0.
+                current_seed = 0 if current_seed is None else current_seed + 1
     except KeyboardInterrupt:
         print("\nExiting.")
 

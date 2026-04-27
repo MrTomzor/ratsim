@@ -1,0 +1,169 @@
+# Sample world config exercising the new MazeLayoutLoader (rooms + corridors
+# generated on a 2D mask, materialized as chunk-local "maze_block" structures).
+#
+# Pairs well with world_bounds/boundary_type=visible_wall as a safety net in
+# case maze/border_walls is disabled or world dims aren't a clean multiple of
+# maze/cell_size and a thin strip is left exposed at the edges.
+
+seed: 42
+chunk_width: 64
+
+# Flat, empty terrain — the maze is the layout.
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 150
+world_bounds/height: 150
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+# ─────────────────────────────────────────────
+#  Layout mode switch
+# ─────────────────────────────────────────────
+# "default" → WorldLayoutLoader (cities/villages/etc).
+# "maze"    → MazeLayoutLoader takes over as ILayoutProvider.
+layout/mode: maze
+
+# WorldLayoutLoader stands down when layout/mode=maze, but the road network
+# would crash CityLoader if any city/village were requested anyway — keep
+# all default-layout structure counts at 0 in maze mode.
+layout/structures/city/min: 0
+layout/structures/city/max: 0
+layout/structures/village/min: 0
+layout/structures/village/max: 0
+layout/structures/orchard/min: 0
+layout/structures/orchard/max: 0
+layout/structures/farm/min: 0
+layout/structures/farm/max: 0
+layout/structures/types: ""
+layout/roads/mode: none
+
+agents_spawn_pos: random
+
+# ─────────────────────────────────────────────
+#  Maze generation
+# ─────────────────────────────────────────────
+# Generator variant. Only "rooms_and_corridors" is implemented today;
+# this hook exists so future flavors (e.g. cellular automata caves) can plug
+# in without changing the layout/mode switch.
+maze/mode: rooms_and_corridors
+
+# World units per mask cell. Smaller = finer-grained walls but more blocks
+# spawned per chunk (cost is quadratic in 1/cell_size). World dims should be
+# a multiple of cell_size, otherwise a thin floor strip is left at the edges.
+maze/cell_size: 1.0
+
+# Y scale of every block in world units. Should exceed agent height + lidar
+# beam reach; otherwise rays graze over walls.
+maze/wall_height: 3.0
+
+# Target room count. Rejection sampling — if the world is too cramped you may
+# get fewer rooms than requested; check Unity logs (verbose mode) to confirm.
+maze/n_rooms: 8
+
+# Min/max room side length in cells (uniform sampling). Multiply by cell_size
+# for world-unit room sizes.
+maze/room_min_size_cells: 6
+maze/room_max_size_cells: 12
+
+# Minimum cell gap between any two room rectangles. Lower = denser, more
+# cluster-y layouts; 0 lets rooms touch.
+maze/room_min_separation_cells: 2
+
+# Rejection-sampling budget: total tries = n_rooms * room_max_attempts.
+# Bump if you ask for many rooms in a small world and aren't getting them.
+maze/room_max_attempts: 200
+
+# Corridor width in cells (carved as one straight horizontal + one vertical
+# leg per edge). Should be at least agent diameter / cell_size.
+maze/corridor_width_cells: 3
+
+# Loopiness. After the MST connects all rooms, this fraction of the remaining
+# (non-tree) room pairs are added as extra corridors. 0 = pure tree (no
+# loops), 1 = fully connected (every pair has a corridor — rare in practice).
+maze/extra_corridor_fraction: 0.3
+
+# 1 = stamp a 1-cell wall ring around the entire mask edge so the maze is
+# enclosed (recommended). 0 = leave edges open; rooms/corridors may run all
+# the way to the world boundary.
+maze/border_walls: 1
+
+# Lidar semantic label applied to every block.
+maze/semantic_name: maze_wall
+
+# ─────────────────────────────────────────────
+#  Corridor structure spawning (optional)
+# ─────────────────────────────────────────────
+# Drop structures (e.g. rubble piles, debris, doors) into corridor segments.
+# Empty types list OR max_per_corridor=0 disables the whole feature.
+#
+# How attempts work:
+#  - For each corridor segment we run `max_per_corridor` independent attempts.
+#  - Each attempt picks one random t along the segment, then iterates the
+#    `types` list IN ORDER. The first entry whose `chance` roll succeeds AND
+#    that fits without overlapping a previously-placed structure wins the
+#    attempt. So list order = priority order, and giving an entry chance<1
+#    leaves room for lower-priority fallbacks at that t.
+#  - Placed structures reserve an interval along the segment; overlap checks
+#    use that interval, so structures naturally space themselves out.
+
+maze/corridor_structures/types: "RockfallV1"
+maze/corridor_structures/max_per_corridor: 3
+
+# RockfallV1 — placeholder example for a future rubble-spawning prefab.
+# (Prefab must live at Resources/WorldGen/WorldStructurePrefabs/RockfallV1
+#  and have a footprintCollider.)
+#
+#   chance                       per-attempt probability of being picked.
+#                                Stacks with other entries: chance=1 means
+#                                this entry always wins its attempts (no
+#                                fallback considered).
+#
+#   scale_width_with_corridor    1 → sizeOverride.y (perpendicular axis) is
+#                                set to the corridor width, so the structure
+#                                spans wall-to-wall regardless of corridor
+#                                size. 0 → use the prefab's native footprint.
+#
+#   scale_length_with_corridor   1 → sizeOverride.x (along-corridor axis) is
+#                                set to the entire segment length, centered.
+#                                The structure claims the whole segment, so
+#                                no other structure can share it. Use this
+#                                with scale_width_with_corridor=1 to fully
+#                                fill the corridor cross-section (useful for
+#                                e.g. continuous rubble fields).
+#
+#   align_with_corridor          1 → rotate so sizeOverride.x lies along the
+#                                corridor direction. 0 → world-aligned.
+#                                Almost always 1 for elongated objects.
+#
+#   randomize_direction          1 → after aligning, flip 180° with 50% prob
+#                                (useful for asymmetric prefabs so they don't
+#                                all face the same way).
+maze/corridor_structures/RockfallV1/chance: "0.6"
+maze/corridor_structures/RockfallV1/scale_width_with_corridor: "1"
+maze/corridor_structures/RockfallV1/scale_length_with_corridor: "0"
+maze/corridor_structures/RockfallV1/align_with_corridor: "1"
+maze/corridor_structures/RockfallV1/randomize_direction: "1"
+
+# ─────────────────────────────────────────────
+#  Reward objects (constrained to room interiors)
+# ─────────────────────────────────────────────
+# Uniform density over the *cells flagged as room* — corridor floor is
+# excluded. Overlap checks against blocks come for free since blocks are
+# WorldStructures.
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0.005"
+reward_objects/uniform_constrain_to_rooms: "1"
+reward_objects/boundary_buffer: "5"
+reward_objects/allowed_structures: ""
+
+# ─────────────────────────────────────────────
+#  Misc disables
+# ─────────────────────────────────────────────
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"

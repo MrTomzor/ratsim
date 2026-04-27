@@ -175,18 +175,20 @@ def _register_cleanup(port: int) -> None:
 def allocate_unity_instances(
     n_envs: int = 1,
     fresh: bool = False,
-    base_port: int = FRESH_PORT_BASE,
+    base_port: Optional[int] = None,
 ) -> List[UnityInstance]:
     """Pick (and spawn if needed) Unity instances for ``n_envs`` envs.
 
     Rules:
-      * n_envs == 1 and not fresh: probe :9000. Reuse if alive; else spawn fresh
-        on :9000 (requires RATSIM_UNITY_BIN). Useful for debug runs alongside
-        a manually-launched Unity.
-      * n_envs == 1 and fresh: always spawn on ``base_port`` (default 9100).
-        Use when you don't want to risk contaminating a persistent instance.
-      * n_envs > 1: always spawn fresh on ``base_port..base_port+n-1``. Refuses
-        to use port 9000 to avoid clobbering an interactive instance. Requires
+      * n_envs == 1, no ``base_port``, not ``fresh``: probe :9000. Reuse if
+        alive; else spawn fresh on :9000 (requires RATSIM_UNITY_BIN). Useful
+        for debug runs alongside a manually-launched Unity.
+      * n_envs == 1 with ``fresh=True`` or an explicit ``base_port``: always
+        spawn on ``base_port`` (default :9100 if ``fresh=True`` and no
+        base_port given). Use when you don't want to touch the persistent
+        instance — e.g. running a second training process in parallel.
+      * n_envs > 1: always spawn fresh on ``base_port..base_port+n-1``
+        (default base_port :9100). Refuses to use port 9000. Requires
         RATSIM_UNITY_BIN.
 
     Returns one UnityInstance per env. ``.owned`` is True for spawned ones
@@ -196,9 +198,12 @@ def allocate_unity_instances(
         raise ValueError(f"n_envs must be >= 1, got {n_envs}")
 
     binary = _resolve_binary()
+    base_port_specified = base_port is not None
+    if base_port is None:
+        base_port = FRESH_PORT_BASE
 
-    # n_envs=1 reuse path
-    if n_envs == 1 and not fresh:
+    # n_envs=1 reuse path: only when the caller didn't ask for a specific port.
+    if n_envs == 1 and not fresh and not base_port_specified:
         if _instance_alive(PERSISTENT_PORT):
             print(f"[unity_launcher] reusing existing instance on port {PERSISTENT_PORT}")
             return [UnityInstance(port=PERSISTENT_PORT, owned=False)]
@@ -212,7 +217,7 @@ def allocate_unity_instances(
         _register_cleanup(PERSISTENT_PORT)
         return [UnityInstance(port=PERSISTENT_PORT, owned=True)]
 
-    # Fresh-spawn path (n_envs > 1, or n_envs=1 with fresh=True)
+    # Fresh-spawn path (n_envs > 1, fresh=True, or explicit base_port)
     if binary is None:
         raise RuntimeError(
             "auto-spawn requested but RATSIM_UNITY_BIN is unset.\n"

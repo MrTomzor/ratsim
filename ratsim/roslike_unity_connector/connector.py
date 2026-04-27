@@ -321,6 +321,36 @@ class RoslikeUnityConnector:
                 messages.append(self.received_messages[i])
         return messages
 
+    # Topic Unity publishes WorldGenStatusMessage on (errors/warnings/info from world generation).
+    WORLDGEN_STATUS_TOPIC = "/sim_control/worldgen_status"
+
+    def process_worldgen_status(self, raise_on_error: bool = False):
+        """Print any WorldGenStatusMessage entries received this step.
+
+        Surfaces world-generation errors (e.g. layout constraint failures, reward
+        spawn count out of bounds) to the user's terminal — these would otherwise
+        only be visible in Unity's own log. Returns the list of status messages.
+
+        If raise_on_error is True, raises RuntimeError after printing when any
+        message has severity 'error'. Off by default so a single bad reset does
+        not abort a long training run; callers in interactive contexts can opt in.
+        """
+        msgs = self.get_received_messages(self.WORLDGEN_STATUS_TOPIC)
+        if not msgs:
+            return msgs
+        errored = []
+        for m in msgs:
+            sev = (getattr(m, "severity", "") or "").upper()
+            src = getattr(m, "source", "?")
+            text = getattr(m, "message", "")
+            line = f"[WORLDGEN {sev}] ({src}) {text}"
+            print(line, flush=True)
+            if sev == "ERROR":
+                errored.append(line)
+        if raise_on_error and errored:
+            raise RuntimeError("Unity world generation reported errors:\n" + "\n".join(errored))
+        return msgs
+
     def get_all_received_messages_and_topics_dict(self):
 
         # Return list of all messages received on the specified topic
