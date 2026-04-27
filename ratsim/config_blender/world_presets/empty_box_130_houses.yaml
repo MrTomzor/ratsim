@@ -22,7 +22,7 @@ world_bounds/boundary_height: 20
 # layout/structures/house_basic/max: 10
 # layout/structures/types: "house_basic"
 
-layout/max_layout_attempts: 50
+layout/max_layout_attempts: 100
 layout/structures/house_simplest/min: 5
 layout/structures/house_simplest/max: 5
 layout/structures/types: "house_simplest"
