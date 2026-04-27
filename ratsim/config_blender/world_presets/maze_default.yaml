@@ -47,7 +47,7 @@ layout/roads/mode: none
 # wall chunks around the candidate before physics-checking, so the agent never
 # lands on a wall block even though walls are chunk-streamed.
 agents_spawn_pos/mode: in_structures
-agents_spawn_pos/allowed_structures: "maze_room"
+agents_spawn_pos/allowed_structures: "reward_room, empty_room"
 
 # ─────────────────────────────────────────────
 #  Maze generation
@@ -68,7 +68,11 @@ maze/wall_height: 3.0
 
 # Target room count. Rejection sampling — if the world is too cramped you may
 # get fewer rooms than requested; check Unity logs (verbose mode) to confirm.
-maze/n_rooms: 8
+maze/n_rooms: 5
+#
+maze/rooms/types: "reward_room"
+maze/rooms/reward_room/min: 5
+maze/rooms/reward_room/max: 5
 
 # Min/max room side length in cells (uniform sampling). Multiply by cell_size
 # for world-unit room sizes.
@@ -161,10 +165,27 @@ maze/corridor_structures/RockfallV1/randomize_direction: "1"
 # excluded. Overlap checks against blocks come for free since blocks are
 # WorldStructures.
 reward_objects/prefab_name: reward_obj1
-reward_objects/uniform_density: "0.005"
-reward_objects/uniform_constrain_to_rooms: "1"
+reward_objects/uniform_density: "0.0"
+# reward_objects/uniform_constrain_to_rooms: "1"
 reward_objects/boundary_buffer: "5"
-reward_objects/allowed_structures: ""
+# reward_objects/allowed_structures: ""
+
+reward_objects/allowed_structures: "reward_room"
+reward_objects/reward_room/min_per_structure: "4"
+reward_objects/reward_room/max_per_structure: "4"
+
+
+# ─────────────────────────────────────────────
+#  Room labeling
+# ─────────────────────────────────────────────
+# memory-maze 11x11 places 4 colored targets, one per room (n_targets=4 over
+# max_rooms=6). We split the rooms into "reward_room" (gets a reward) and
+# "empty_room" (doesn't). Geometry is identical; the labels just tell
+# RewardObjectLoader which rooms to populate.
+#
+# Mins/maxes validated against rooms actually generated. If the maze produces
+# fewer rooms than reward_room/min, the loader emits an explicit error rather
+# than silently degrading.
 
 # ─────────────────────────────────────────────
 #  Misc disables
