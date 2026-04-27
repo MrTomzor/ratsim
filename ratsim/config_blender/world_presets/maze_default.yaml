@@ -43,7 +43,11 @@ layout/structures/farm/max: 0
 layout/structures/types: ""
 layout/roads/mode: none
 
-agents_spawn_pos: random
+# Spawn the agent inside a random room. The generic pipeline force-loads the
+# wall chunks around the candidate before physics-checking, so the agent never
+# lands on a wall block even though walls are chunk-streamed.
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "maze_room"
 
 # ─────────────────────────────────────────────
 #  Maze generation

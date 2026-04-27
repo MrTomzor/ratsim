@@ -22,8 +22,8 @@ house_generation/allowed_prefabs: ""
 # by one cell and a thin floor strip is left at the edges (visible_wall covers it).
 # world_bounds/width: 33
 # world_bounds/height: 33
-world_bounds/width: 45
-world_bounds/height: 45
+world_bounds/width: 99
+world_bounds/height: 99
 world_bounds/structures_margin: 0
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
