@@ -18,10 +18,8 @@ house_generation/mode: uniform
 house_generation/allowed_prefabs: ""
 
 # Divide by cell-size to get memory-maze cell count (45x45 / 3 = 15x15 = original largest maze size)
-# world_bounds/width: 45
-# world_bounds/height: 45
-world_bounds/width: 75
-world_bounds/height: 75
+world_bounds/width: 55
+world_bounds/height: 55
 world_bounds/structures_margin: 0
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
@@ -47,7 +45,8 @@ maze/n_rooms: 6
 # memory-maze 11x11 uses room_min_size=3, room_max_size=5. Both are rounded up to odd
 # by this loader if even values are passed. Min must be >=3.
 maze/room_min_size_cells: 3
-maze/room_max_size_cells: 5
+maze/room_max_size_cells: 3
+# maze/room_max_size_cells: 5 # TODO - fix max room size
 
 # Total retry budget across all room placement attempts (matches labmaze default 1000).
 maze/room_max_attempts: 1000
@@ -83,6 +82,7 @@ maze/rooms/types: "reward_room, empty_room"
 maze/rooms/reward_room/min: 4
 maze/rooms/reward_room/max: 4
 maze/rooms/empty_room/min: 0
+maze/rooms/empty_room/max: 0
 # empty_room/max unset (-1) → absorbs any leftover rooms.
 
 # ─────────────────────────────────────────────

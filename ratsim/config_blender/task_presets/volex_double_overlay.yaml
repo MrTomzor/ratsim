@@ -1,0 +1,2 @@
+volumetric_exploration_settings:
+  reward_per_m2: 0.02
