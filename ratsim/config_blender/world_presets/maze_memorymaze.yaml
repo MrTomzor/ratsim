@@ -1,4 +1,4 @@
-# Mimics the memory-maze 11x11 task layout:
+# Mimics the memory-maze task layout:
 # https://github.com/jurgisp/memory-maze (which uses DeepMind labmaze under the hood).
 #
 # Algorithm (MazeLayoutLoader, mode="memory_maze"):
@@ -17,13 +17,11 @@ vegetation/allowed_prefabs: ""
 house_generation/mode: uniform
 house_generation/allowed_prefabs: ""
 
-# 11x11 mask cells * cell_size (3.0) = 33x33 world units. Odd cell count is enforced
-# by the loader; if these dims aren't odd-multiple of cell_size, it shrinks the mask
-# by one cell and a thin floor strip is left at the edges (visible_wall covers it).
-# world_bounds/width: 33
-# world_bounds/height: 33
-world_bounds/width: 45
-world_bounds/height: 45
+# Divide by cell-size to get memory-maze cell count (45x45 / 3 = 15x15 = original largest maze size)
+# world_bounds/width: 45
+# world_bounds/height: 45
+world_bounds/width: 75
+world_bounds/height: 75
 world_bounds/structures_margin: 0
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
@@ -37,11 +35,10 @@ layout/roads/mode: none
 
 maze/mode: memory_maze
 
-# Mask resolution. memory-maze uses 1 unit per cell — we use 3 here so corridors are
-# 3 world units wide (a typical agent diameter). cell_size scales the entire maze
-# uniformly without changing the layout structure.
-maze/cell_size: 3.0
-maze/wall_height: 3.0
+maze/cell_size: 5.0
+maze/wall_height: 5.0
+# maze/cell_size: 3.0
+# maze/wall_height: 3.0
 
 # Room budget (= labmaze max_rooms). Rejection sampling stops at this count or when
 # room_max_attempts retries are exhausted. memory-maze 11x11 uses 6.

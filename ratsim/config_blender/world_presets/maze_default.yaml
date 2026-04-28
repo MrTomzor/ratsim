@@ -76,8 +76,8 @@ maze/rooms/reward_room/max: 5
 
 # Min/max room side length in cells (uniform sampling). Multiply by cell_size
 # for world-unit room sizes.
-maze/room_min_size_cells: 6
-maze/room_max_size_cells: 12
+maze/room_min_size_cells: 10
+maze/room_max_size_cells: 20
 
 # Minimum cell gap between any two room rectangles. Lower = denser, more
 # cluster-y layouts; 0 lets rooms touch.
@@ -89,7 +89,7 @@ maze/room_max_attempts: 200
 
 # Corridor width in cells (carved as one straight horizontal + one vertical
 # leg per edge). Should be at least agent diameter / cell_size.
-maze/corridor_width_cells: 3
+maze/corridor_width_cells: 5
 
 # Loopiness. After the MST connects all rooms, this fraction of the remaining
 # (non-tree) room pairs are added as extra corridors. 0 = pure tree (no
