@@ -16,8 +16,8 @@ vegetation/allowed_prefabs: ""
 house_generation/mode: uniform
 house_generation/allowed_prefabs: ""
 
-world_bounds/width: 150
-world_bounds/height: 150
+world_bounds/width: 130
+world_bounds/height: 130
 world_bounds/structures_margin: 0
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
@@ -68,11 +68,14 @@ maze/wall_height: 3.0
 
 # Target room count. Rejection sampling — if the world is too cramped you may
 # get fewer rooms than requested; check Unity logs (verbose mode) to confirm.
-maze/n_rooms: 5
+maze/n_rooms: 8
 #
-maze/rooms/types: "reward_room"
+maze/rooms/types: "reward_room, empty_room"
 maze/rooms/reward_room/min: 5
 maze/rooms/reward_room/max: 5
+
+maze/rooms/empty_room/min: 3
+maze/rooms/empty_room/max: 3
 
 # Min/max room side length in cells (uniform sampling). Multiply by cell_size
 # for world-unit room sizes.
@@ -94,7 +97,7 @@ maze/corridor_width_cells: 5
 # Loopiness. After the MST connects all rooms, this fraction of the remaining
 # (non-tree) room pairs are added as extra corridors. 0 = pure tree (no
 # loops), 1 = fully connected (every pair has a corridor — rare in practice).
-maze/extra_corridor_fraction: 0.3
+maze/extra_corridor_fraction: 1
 
 # 1 = stamp a 1-cell wall ring around the entire mask edge so the maze is
 # enclosed (recommended). 0 = leave edges open; rooms/corridors may run all
