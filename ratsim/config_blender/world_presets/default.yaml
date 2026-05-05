@@ -2,35 +2,35 @@ seed: 42
 chunk_width: 128
 
 vegetation/allowed_prefabs: tree1
-vegetation/tree1/density: 0.01
+vegetation/tree1/density: 0.005
 
 height_generation/mode: superflat
 height_generation/superflat_height: 0
 house_generation/mode: uniform
 house_generation/allowed_prefabs: "house1_small, mall1"
 
-world_bounds/width: 2000
-world_bounds/height: 2000
+world_bounds/width: 1000
+world_bounds/height: 1000
 world_bounds/structures_margin: 200
-world_bounds/boundary_type: visible_wall
+world_bounds/boundary_type: none
 world_bounds/boundary_height: 50
 
 city/layout_mode: grid
 # Which house prefabs cities may spawn (must exist in Resources/WorldGen/WorldStructurePrefabs/
 # and start with "house"). Empty string = use all discovered house* prefabs.
-city/allowed_houses: "house_basic, house_simplest"
+city/allowed_houses: "house_basic, house_mall"
 # Per-prefab relative spawn weight (default 1). 0 disables that prefab.
 city/house_basic/probability: "1"
-city/house_simplest/probability: "1"
+city/mall/probability: "0.3"
 
 layout/structures/city/min: 1
-layout/structures/city/max: 2
+layout/structures/city/max: 1
 layout/structures/village/min: 0
 layout/structures/village/max: 0
 layout/structures/orchard/min: 0
-layout/structures/orchard/max: 3
+layout/structures/orchard/max: 0
 layout/structures/farm/min: 0
-layout/structures/farm/max: 3
+layout/structures/farm/max: 0
 layout/structures/types: "city, village, orchard, farm"
 layout/roads/mode: highway
 
@@ -40,7 +40,7 @@ house/allowed_door_prefabs: "door1,door2"
 house/door1/probability: "1"
 house/door2/probability: "0"
 house/enable_roofs: "0"
-house/chance_wall_broken: "0.7"
+house/chance_wall_broken: "0.9"
 house/rubble_prefab: rubble_dense_small
 house/rubble_mass: "0.2"
 house/clutter_density: "0.5"
@@ -48,7 +48,7 @@ house/allowed_car_prefabs: car1
 house/car_spawn_chance: "0.5"
 
 smoke/global_smoke_enabled: "0"
-smoke/2dmode_enabled: "1"
+smoke/2dmode_enabled: "0"
 smoke/3dmode_enabled: "0"
 smoke/default_radius: 20
 smoke/default_density: 0.1
@@ -57,15 +57,15 @@ smoke/corruption_mode: "effective_range"
 smoke/effective_range: 6
 smoke/effective_range_variance: 0.5
 
-chaotic_walkers/enabled: "0"
-chaotic_walkers/prefab_name: walker_capsule
-chaotic_walkers/density: "0"
+chaotic_walkers/enabled: "1"
+chaotic_walkers/prefab_name: chaotic_walker_abstract
+chaotic_walkers/density: "0.002"
 chaotic_walkers/avoidance_probability: "0.5"
 chaotic_walkers/aggression_probability: "0"
 chaotic_walkers/reaction_radius: "5"
 chaotic_walkers/reaction_velocity: "2"
-chaotic_walkers/min_velocity: "0.5"
-chaotic_walkers/max_velocity: "1.5"
+chaotic_walkers/min_velocity: "1"
+chaotic_walkers/max_velocity: "1.2"
 chaotic_walkers/walk_duration_min_sec: "1.0"
 chaotic_walkers/walk_duration_max_sec: "3.0"
 chaotic_walkers/pause_duration_min_sec: "0.5"
@@ -77,13 +77,13 @@ chaotic_walkers/inward_bias_strength: "2"
 reward_objects/signal_source/enable_probability: "1"
 reward_objects/signal_source/channel: reward
 reward_objects/signal_source/strength: "1"
-reward_objects/signal_source/range: "50"
+reward_objects/signal_source/range: "80"
 reward_objects/signal_source/falloff: linear
 
 reward_objects/prefab_name: reward_obj1
-reward_objects/uniform_density: "0.001"
+reward_objects/uniform_density: "0.0001"
 reward_objects/allowed_structures: "house_basic, house_mall"
-reward_objects/house_basic/spawn_probability: "1"
-reward_objects/house_basic/skip_probability: "0.2"
-reward_objects/house_mall/spawn_probability: "1"
+reward_objects/house_basic/spawn_probability: "0.8"
+reward_objects/house_basic/skip_probability: "0"
+reward_objects/house_mall/spawn_probability: "0.8"
 reward_objects/house_mall/skip_probability: "0"
