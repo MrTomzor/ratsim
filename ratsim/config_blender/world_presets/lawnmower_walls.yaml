@@ -10,15 +10,17 @@ height_generation/superflat_height: 0
 house_generation/mode: uniform
 house_generation/allowed_prefabs: ""
 
-world_bounds/width: 100
-world_bounds/height: 100
-world_bounds/structures_margin: 20
+world_bounds/width: 170
+world_bounds/height: 170
+world_bounds/structures_margin: 5
 world_bounds/boundary_type: visible_wall
 world_bounds/boundary_height: 20
 
 layout/structures/wall50/min: 2
-layout/structures/wall50/max: 5
-layout/structures/types: "wall50"
+layout/structures/wall50/max: 4
+layout/structures/house_simplest/min: 4
+layout/structures/house_simplest/max: 4
+layout/structures/types: "wall50, house_simplest"
 layout/roads/mode: none
 
 agents_spawn_pos: random

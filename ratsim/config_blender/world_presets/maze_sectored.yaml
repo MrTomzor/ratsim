@@ -1,0 +1,103 @@
+# Sectored rooms-and-corridors maze: 4 quadrants connected only via a central chamber.
+# Within each sector the maze is loopy (extra_corridor_fraction), but the only path
+# between sectors goes through the chamber — designed to break memoryless RL policies.
+#
+# Topology guarantee: stamp-protected divider walls run from chamber edges to mask
+# edges along the cardinal axes, splitting space into 4 quadrants. L-corridors that
+# would carve through them have a notch removed at the divider, leaving them solid.
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 250
+world_bounds/height: 250
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+# ─────────────────────────────────────────────
+#  Layout
+# ─────────────────────────────────────────────
+layout/mode: maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+layout/structures/city/min: 0
+layout/structures/city/max: 0
+layout/structures/village/min: 0
+layout/structures/village/max: 0
+layout/structures/orchard/min: 0
+layout/structures/orchard/max: 0
+layout/structures/farm/min: 0
+layout/structures/farm/max: 0
+
+# ─────────────────────────────────────────────
+#  Maze + sectors
+# ─────────────────────────────────────────────
+maze/mode: rooms_and_corridors
+maze/cell_size: 1.0
+maze/wall_height: 3.0
+
+# Total rooms = chamber + sector rooms. With sectors enabled and n_rooms=9, we get
+# 1 chamber + 8 sector rooms (2 per sector with round-robin assignment).
+maze/n_rooms: 9
+maze/room_min_size_cells: 6
+maze/room_max_size_cells: 12
+maze/room_min_separation_cells: 2
+maze/room_max_attempts: 200
+maze/corridor_width_cells: 3
+
+# Per-sector loopiness — fraction of non-tree pairs within each sector turned into
+# extra corridors. 0 = pure tree, 1 = fully connected sector. 0.4 gives a noticeably
+# loopy sector without saturating it.
+maze/extra_corridor_fraction: 0.9
+maze/border_walls: 1
+maze/edge_walls_only: 1
+maze/semantic_name: maze_wall
+
+# Sectored topology — "quadrants" style: sectors are NE/NW/SE/SW corner quadrants,
+# dividers along the cardinal axes. Chamber typically connects to >4 sector rooms
+# (one MST edge per sector + extras along short chamber-room non-tree edges).
+# For exactly-4 cardinal exits with diagonal sector boundaries, use style: orthogonal.
+maze/sectors/style: quadrants
+# Chamber size in cells. Must exceed corridor_width_cells; 7 gives enough margin for
+# corridor strips not to overflow into adjacent sectors at the divider.
+maze/sectors/central_chamber_size_cells: 7
+
+# ─────────────────────────────────────────────
+#  Room labeling
+# ─────────────────────────────────────────────
+# central_chamber gets force_central=1 → placed at world center as the only inter-
+# sector hub. The remaining 8 rooms get labeled reward_room.
+maze/rooms/types: "central_chamber, reward_room"
+maze/rooms/central_chamber/min: 1
+maze/rooms/central_chamber/max: 1
+maze/rooms/central_chamber/force_central: 1
+maze/rooms/reward_room/min: 8
+maze/rooms/reward_room/max: 8
+
+# ─────────────────────────────────────────────
+#  Spawning
+# ─────────────────────────────────────────────
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "central_chamber"
+
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0"
+reward_objects/boundary_buffer: "2"
+reward_objects/allowed_structures: "reward_room"
+reward_objects/reward_room/min_per_structure: "1"
+reward_objects/reward_room/max_per_structure: "2"
+
+# ─────────────────────────────────────────────
+#  Misc
+# ─────────────────────────────────────────────
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"
