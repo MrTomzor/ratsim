@@ -10,8 +10,10 @@
 #
 # The central chamber has NO well when Home = random room (it stays a pure hub /
 # spawn area). For the Home-IN-chamber variant, layer ortho_home_chamber.yaml on
-# top. For difficulty, layer exactly one of ortho_wells_d1..d5.yaml (d5 == the
-# values below). Layer order: [maze_ortho_wells, ortho_wells_dN, ortho_home_chamber?].
+# top. Difficulty is NOT preset-based: the values below are the HARDEST end (d=1);
+# the adaptive_difficulty block in defs/ortho_wells_adaptive.yaml slides keys
+# down to the easiest end (d=0). Playtest any d via
+# ratsim_experiments/human_control_test_adaptive.py.
 #
 # Use with agent preset sphereagent_2d_lidar_wells_cue (sector_signal 'cue' sensor).
 
@@ -51,7 +53,7 @@ maze/mode: rooms_and_corridors
 maze/cell_size: 1.0
 maze/wall_height: 3.0
 
-maze/n_rooms: 19                       # chamber + 18 sector rooms (overridden by ortho_wells_dN)
+maze/n_rooms: 19                       # chamber + 18 sector rooms (slid down by adaptive_difficulty)
 maze/room_min_size_cells: 7
 maze/room_max_size_cells: 31
 maze/room_min_separation_cells: 2
@@ -79,17 +81,17 @@ maze/rooms/central_chamber/max: 1
 maze/rooms/central_chamber/force_central: 1
 maze/rooms/home_well_room/min: 1
 maze/rooms/home_well_room/max: 1
-maze/rooms/reward_room/min: 17         # n_rooms - chamber - home (overridden by ortho_wells_dN)
+maze/rooms/reward_room/min: 17         # n_rooms - chamber - home (slid down by adaptive_difficulty)
 maze/rooms/reward_room/max: 17
 
 # ─────────────────────────────────────────────
 #  Spawning — independent of Home selection
 # ─────────────────────────────────────────────
-#   "central_chamber"  → start in the hub (default here; d1/d2 override to Home)
-#   "home_well_room"   → start AT the Home well
+#   "home_well_room"   → start AT the Home well (default; constant across difficulty)
+#   "central_chamber"  → start in the hub
 #   "reward_room"      → start in a random non-home room
 agents_spawn_pos/mode: in_structures
-agents_spawn_pos/allowed_structures: "central_chamber"
+agents_spawn_pos/allowed_structures: "home_well_room"
 agents_spawn_pos/randomize_rotation: 1
 
 # ─────────────────────────────────────────────
@@ -143,7 +145,7 @@ well_schedule/home_source: structure   # Home well = the one in the home_well_ro
 well_schedule/home_structure_type: home_well_room
 well_schedule/home_well_id: "-1"
 well_schedule/first_trial: random      # paper: session opens with an LED (Random) trial
-# Fixed across ALL difficulty ladders (change here, never in ortho_wells_dN):
+# Fixed across ALL difficulties (change here, never in adaptive_difficulty ranges):
 # paper has no opening freebie — the session starts with the LED trial.
 well_schedule/prime_home_reward: 0
 well_schedule/random_delay_steps: "10"
