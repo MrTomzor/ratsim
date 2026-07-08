@@ -1,0 +1,19 @@
+# Variant overlay: Home well IN the central chamber (instead of a random room).
+# Layer LAST, composable with any difficulty:
+#   blend_presets("world", ["maze_ortho_wells", "ortho_wells_dN", "ortho_home_chamber"])
+#
+# The chamber gets a well and the scheduler anchors Home to it. The home_well_room
+# label from the base still exists (overlays can only override, not remove keys)
+# but it just becomes an ordinary well room — nothing special about it once
+# home_structure_type points at the chamber.
+#
+# Agent spawn stays whatever the difficulty overlay set. For "spawn at Home" in
+# THIS variant, additionally override:
+#   agents_spawn_pos/allowed_structures: "central_chamber"
+# (d1/d2 set spawn to home_well_room, which is NOT Home here.)
+
+wells/allowed_structures: "reward_room, home_well_room, central_chamber"
+wells/central_chamber/min_per_structure: "1"
+wells/central_chamber/max_per_structure: "1"
+
+well_schedule/home_structure_type: central_chamber

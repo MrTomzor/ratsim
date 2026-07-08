@@ -1,0 +1,17 @@
+# Difficulty overlay d2 for maze_ortho_wells — layer AFTER the base:
+#   blend_presets("world", ["maze_ortho_wells", "ortho_wells_d2"])
+#
+# Small arena, ~2 rooms per arm, agent still starts AT the Home well.
+# prime_home_reward is fixed in the base preset — never overridden here.
+
+world_bounds/width: 110
+world_bounds/height: 110
+
+maze/n_rooms: 9                        # chamber + home + 7 reward rooms
+maze/room_max_size_cells: 19
+maze/rooms/reward_room/min: 7
+maze/rooms/reward_room/max: 7
+
+agents_spawn_pos/allowed_structures: "home_well_room"   # start AT Home
+
+wells/cue/range: "175"                 # ≈ arena diagonal (156) + margin
