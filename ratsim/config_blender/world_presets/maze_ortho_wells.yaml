@@ -145,9 +145,10 @@ well_schedule/home_source: structure   # Home well = the one in the home_well_ro
 well_schedule/home_structure_type: home_well_room
 well_schedule/home_well_id: "-1"
 well_schedule/first_trial: random      # paper: session opens with an LED (Random) trial
-# Fixed across ALL difficulties (change here, never in adaptive_difficulty ranges):
-# paper has no opening freebie — the session starts with the LED trial.
-well_schedule/prime_home_reward: 0
+# Fixed across ALL difficulties (change here, never in adaptive_difficulty ranges).
+# 1 = open each episode with a Home dispense (the paper has no such freebie —
+# set 0 for the faithful variant where the session starts with the LED trial).
+well_schedule/prime_home_reward: 1
 well_schedule/random_delay_steps: "10"
 well_schedule/home_delay_steps: "10"
 well_schedule/inter_trial_delay_min_steps: "0"
