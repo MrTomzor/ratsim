@@ -1,0 +1,23 @@
+# sphereagent_2d_lidar with the wells semantic set: the 2D lidar reports 'reward_pickup'
+# and 'well' as distinct classes, everything else as the default (obstacle) class.
+prefab_name: SphereAgent
+name_prefix: rat1
+sensors:
+  - name: lidar2d
+    maxRange: 20.0
+    angleStartDeg: -90
+    angleEndDeg: 90
+    angleIncrementDeg: 10
+    occlusionRegion: none
+    occlusionDistance: 0.5
+    semanticSet: reward_well_obstacle
+  - name: odom
+  - name: collision
+  - name: relative_pose
+  - name: compass
+    biasRad: 0.0
+actuators: velocity
+velocity/steeringBias: 0.0
+velocity/blockLeftTurn: false
+velocity/blockRightTurn: false
+max_health: 100.0

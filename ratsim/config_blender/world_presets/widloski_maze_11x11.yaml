@@ -1,0 +1,96 @@
+# Scaled Widloski barrier-maze: 11x11 well-rooms.
+#
+# Same apparatus as widloski_maze_3x3, scaled up to show the layout generalizes
+# beyond the paper's 3x3. An 11x11 grid has 2*N*(N-1)=220 edge slots; barrier_fraction
+# 0.5 fills ~110 of them per episode. margin_enabled=1 lets the agent route around the
+# perimeter, and the reachability check (up to n_tries reshuffles) guarantees every
+# well-room stays reachable even when barriers could otherwise wall off a block.
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+# Arena = 11*8 + 2*6 = 100. cell_size generous (8) so the agent has spawn clearance
+# from the centered well (see widloski_maze_3x3 for the reasoning).
+world_bounds/width: 100
+world_bounds/height: 100
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+layout/mode: widloski_maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+widloski_maze/grid_n: 11
+widloski_maze/cell_size: 8.0
+widloski_maze/margin: 6.0
+widloski_maze/margin_enabled: 1
+widloski_maze/barrier_fraction: 0.5    # ~110 of 220 edge slots
+widloski_maze/n_tries: 400
+widloski_maze/room_type: well_room
+widloski_maze/home_cell_mode: random   # none | center | random | explicit
+widloski_maze/home_room_type: home_well_room
+widloski_maze/home_interior_only: 0    # random mode: 1 = keep Home off the edge (inner (N-2)x(N-2) block)
+
+barriers/prefab_name: barrier_basic
+barriers/height: 3.0
+barriers/thickness: 0.3
+barriers/stretch_walls_to_fit_cell_size: 1
+barriers/stretch_walls_cell_size_percentage: 0.85
+
+# Default: start AT the Home well. Use "well_room" to start away from Home,
+# or "well_room, home_well_room" for anywhere.
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "home_well_room"
+
+reward_objects/uniform_density: "0"
+reward_objects/allowed_structures: ""
+
+wells/enabled: "1"
+wells/prefab_name: well_basic
+wells/seed_key: reward
+wells/allowed_structures: "well_room, home_well_room"
+wells/well_room/min_per_structure: "1"
+wells/well_room/max_per_structure: "1"
+wells/home_well_room/min_per_structure: "1"
+wells/home_well_room/max_per_structure: "1"
+
+wells/arrival_radius: "2.0"
+wells/dispense_delay_steps: "10"
+wells/cooldown_steps: "60"
+wells/deplete_on_dispense: "0"
+wells/reward_prefab: reward_obj1
+wells/reward_spawn_min_dist: "0.6"
+wells/reward_spawn_max_dist: "1.5"
+wells/rewards_per_dispense: "1"
+wells/debug_gizmo: "1"
+
+# Cue = abstract 'LED' on the 'cue' channel (see sphereagent_2d_lidar_wells_cue).
+wells/cue/mode: until_depleted
+wells/cue/duration_steps: "30"
+wells/cue/channel: cue
+wells/cue/range: "200"           # >= arena diagonal (~141 for 100x100)
+wells/cue/strength: "1.0"
+wells/cue/falloff: linear
+
+well_schedule/enabled: "1"
+well_schedule/home_source: structure   # structure | center | random | id
+well_schedule/home_structure_type: home_well_room
+well_schedule/home_well_id: "-1"
+well_schedule/first_trial: random
+well_schedule/prime_home_reward: 0     # 1 = open the episode by dispensing a reward at Home (forces Home first trial)
+well_schedule/random_delay_steps: "10"
+well_schedule/home_delay_steps: "10"
+well_schedule/inter_trial_delay_min_steps: "0"    # both 0 = off; paper's 5-15 s gap when nonzero
+well_schedule/inter_trial_delay_max_steps: "0"
+well_schedule/state_topic: "/well/state"
+
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"

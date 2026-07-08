@@ -1,0 +1,82 @@
+# Copy of maze_memorymaze_11x11.yaml with reward pickup objects SWAPPED for WELLS.
+# Wells are placed at the same reward_room slots the reward objects used
+# (wells/seed_key: reward + identical min/max), so they should land in the exact
+# same positions. In Phase 1 (no schedule controller) each well is an always-armed
+# feeder: dwell within wells/arrival_radius for wells/dispense_delay_steps → it
+# publishes /reward_pickup and re-arms after wells/cooldown_steps.
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 55
+world_bounds/height: 55
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+# ─────────────────────────────────────────────
+#  Layout / maze  (identical to maze_memorymaze_11x11)
+# ─────────────────────────────────────────────
+layout/mode: maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+maze/mode: memory_maze
+maze/cell_size: 5.0
+maze/wall_height: 5.0
+maze/n_rooms: 6
+maze/room_min_size_cells: 3
+maze/room_max_size_cells: 3
+maze/room_max_attempts: 1000
+maze/extra_connection_probability: 0.0
+maze/border_walls: 1
+maze/semantic_name: maze_wall
+
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "reward_room, empty_room"
+
+maze/rooms/types: "reward_room, empty_room"
+maze/rooms/reward_room/min: 4
+maze/rooms/reward_room/max: 4
+maze/rooms/empty_room/min: 0
+maze/rooms/empty_room/max: 0
+
+# ─────────────────────────────────────────────
+#  Reward objects: DISABLED (wells replace them)
+# ─────────────────────────────────────────────
+reward_objects/uniform_density: "0"
+reward_objects/allowed_structures: ""
+
+# ─────────────────────────────────────────────
+#  Wells (replace the reward objects, same slots)
+# ─────────────────────────────────────────────
+wells/enabled: "1"
+wells/prefab_name: well_basic          # prefab in Resources/WorldGen/WellPrefabs/ (prefab-only now)
+wells/seed_key: reward                 # pick the SAME slots reward objects would
+wells/allowed_structures: "reward_room"
+wells/reward_room/min_per_structure: "1"
+wells/reward_room/max_per_structure: "1"
+
+# Dispense mechanics (all world-config toggleable)
+wells/arrival_radius: "4.0"            # how close the agent must get to dispense
+wells/dispense_delay_steps: "10"       # dwell steps before dispensing
+wells/cooldown_steps: "60"             # steps before the feeder re-arms
+wells/deplete_on_dispense: "0"         # 0 = re-arming feeder, 1 = one-shot
+wells/reward_prefab: reward_obj1       # REAL reward object dispensed ("" = none); collected by TOUCH
+wells/reward_spawn_min_dist: "0.0"     # spawn rewards in an annulus just OUTSIDE the collideable well
+wells/reward_spawn_max_dist: "1.5"     # (both 0 = on the well, but then its collider blocks reach)
+wells/rewards_per_dispense: "1"
+wells/debug_gizmo: "1"                 # green=active / yellow=closed / red=depleted
+
+# ─────────────────────────────────────────────
+#  Misc
+# ─────────────────────────────────────────────
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"
