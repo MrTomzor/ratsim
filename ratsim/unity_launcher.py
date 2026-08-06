@@ -154,7 +154,9 @@ def _port_bindable(port: int) -> bool:
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        # No SO_REUSEADDR on purpose: we want the same conflict Unity will get.
+        # No SO_REUSEADDR on purpose -- the strictest test available, so a port we
+        # accept is one Unity can definitely bind. (Measured: SO_REUSEADDR makes no
+        # difference against a live listener anyway; it only bypasses TIME_WAIT.)
         s.bind(("", port))
         return True
     except OSError:
@@ -187,6 +189,28 @@ def default_base_port(n_envs: int = 1) -> int:
     the same place instead of re-deriving it and drifting.
     """
     return FRESH_PORT_BASE if _slurm_job_id() is None else _job_base_port(n_envs)
+
+
+def _wait_port_bindable(port: int, timeout_s: float = 20.0) -> bool:
+    """Wait for ``port`` to become bindable, up to ``timeout_s``.
+
+    Exists for the scheduler's port recycling: it releases a run's window and
+    can hand the same ports to the next stage immediately, while the previous
+    stage's Unity is still shutting down. Measured — stage 1 of a run failed
+    twice on 9630 then 9620, which were precisely that job's stage-0 ports; a
+    later scan confirmed both were free and nothing foreign was listening.
+
+    So the right response to "busy" on a *requested* port is to wait for the
+    known previous holder to go, not to fail (which kills the run) and not to
+    move to another port (which desyncs the scheduler's accounting).
+    """
+    deadline = time.monotonic() + timeout_s
+    while True:
+        if _port_bindable(port):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.5)
 
 
 def _next_candidate_port(port: int, taken: set) -> int:
@@ -429,10 +453,14 @@ def allocate_unity_instances(
                     f"pick a different base_port"
                 )
             if not _port_bindable(p):
-                raise RuntimeError(
-                    f"port {p} is already in use; kill it first "
-                    f"(./scripts/stop_ratsim_headless.sh --port {p}) or pick a different base_port"
-                )
+                print(f"[unity_launcher] port {p} busy, waiting for it to free up "
+                      f"(likely the previous stage's Unity shutting down)")
+                if not _wait_port_bindable(p):
+                    raise RuntimeError(
+                        f"port {p} still in use after waiting; kill it first "
+                        f"(./scripts/stop_ratsim_headless.sh --port {p}) "
+                        f"or pick a different base_port"
+                    )
         instances: List[UnityInstance] = []
         for p in ports:
             _spawn_via_script(binary, p)
