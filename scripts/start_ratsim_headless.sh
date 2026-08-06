@@ -32,7 +32,23 @@ LOG=""
 FORCE=0
 MODE=""                                     # "", "xvfb" or "gfx"
 DISPLAY_NUM=${DISPLAY_NUM:-:99}
-RUNDIR="${RATSIM_RUNDIR:-/tmp}"
+
+# Where pidfiles and Unity logs go. This precedence MUST stay identical to
+# _rundir() in ratsim/unity_launcher.py -- if they disagree, Python reads a
+# pidfile this script never wrote and silently fails to kill what it spawned.
+# Bare /tmp is shared with other users' jobs on a cluster node, so a colliding
+# ratsim_<port>.pid would let one job kill another's Unity.
+if [[ -n "${RATSIM_RUNDIR:-}" ]]; then
+  RUNDIR="$RATSIM_RUNDIR"
+elif [[ -n "${SLURM_JOB_ID:-}" ]]; then
+  if [[ -d "/mnt/job-${SLURM_JOB_ID}" ]]; then
+    RUNDIR="/mnt/job-${SLURM_JOB_ID}"
+  else
+    RUNDIR="${TMPDIR:-/tmp/ratsim-job-${SLURM_JOB_ID}}"
+  fi
+else
+  RUNDIR="/tmp"
+fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -84,6 +100,15 @@ port_open() {
   fi
 }
 
+# Is pid $2 the process listening on port $1? Without root, `ss -tlnp` shows
+# process details only for our *own* sockets -- which is exactly the case that
+# matters here. Returns success ("can't rule it out") when ss is unavailable, so
+# this never invents a failure on a box without iproute2.
+port_held_by_pid() {
+  [[ -n "$SS_BIN" ]] || return 0
+  "$SS_BIN" -tlnp 2>/dev/null | grep ":${1} " | grep -q "pid=${2},"
+}
+
 mkdir -p "$RUNDIR" 2>/dev/null || true
 LOG="${LOG:-$RUNDIR/ratsim_${PORT}.log}"
 PIDFILE="$RUNDIR/ratsim_${PORT}.pid"
@@ -122,18 +147,46 @@ fi
 # Unity's comm name is the basename truncated to 15 chars (kernel limit).
 COMM="$(basename "${BIN%.x86_64}" | cut -c1-15)"
 
-# Find the Unity pid by matching -port in its cmdline. Needed because in xvfb
-# mode $! is the xvfb-run wrapper, whose Unity child survives killing it —
-# a pidfile holding the wrapper pid means stop_ratsim_headless.sh silently
-# leaves an instance holding the port. Matching on the port (not just the comm)
-# also keeps two concurrent launches of the same build from stealing each
-# other's pid. `pgrep -x` on the comm never matches this script itself.
-unity_pid_for_port() {
+# Find OUR Unity's pid. Needed because in xvfb mode $! is the xvfb-run wrapper,
+# whose Unity child survives killing it — a pidfile holding the wrapper pid
+# means stop_ratsim_headless.sh silently leaves an instance holding the port.
+#
+# Identified by ancestry, NOT by "any process with -port <PORT>" in its cmdline.
+# The cmdline match looks equivalent and is not: when two launches race for the
+# same port, the loser finds the WINNER's Unity, writes that pid into its own
+# pidfile, and every ownership check downstream then passes while both clients
+# talk to one simulator — and worse, the loser's cleanup then kills the winner's
+# Unity. Measured, not theoretical: two trainings in one job both reported
+# "TCP server up on port 9990 (pid 2770568)".
+ppid_of() {
+  # /proc/<pid>/stat field 4 is the ppid, but field 2 is "(comm)" and may itself
+  # contain spaces or parens -- so cut everything up to the last ") " first,
+  # after which field 1 is the state and field 2 is the ppid.
+  local s
+  s="$(cat "/proc/$1/stat" 2>/dev/null)" || return 1
+  s="${s##*) }"
+  printf '%s\n' "$s" | { read -r _state ppid _rest; printf '%s\n' "$ppid"; }
+}
+
+is_descendant_of() {
+  local p="$1" up
+  for _ in $(seq 1 12); do
+    [[ "$p" == "$2" ]] && return 0
+    up="$(ppid_of "$p")" || return 1
+    [[ -n "$up" && "$up" != 0 && "$up" != 1 ]] || return 1
+    p="$up"
+  done
+  return 1
+}
+
+our_unity_pid() {
+  # Ancestry, not process group: the pgid has to be *read*, and right after `&`
+  # the wrapper may not have called setsid yet, so an early read returns the
+  # shell's old group and matches a stranger's Unity. Parentage is true from the
+  # moment the process exists.
   local pid
   for pid in $(pgrep -x -u "$(id -u)" "$COMM" 2>/dev/null); do
-    if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q -- "-port ${PORT} "; then
-      echo "$pid"; return 0
-    fi
+    is_descendant_of "$pid" "$WRAPPER_PID" && { echo "$pid"; return 0; }
   done
   return 1
 }
@@ -195,6 +248,35 @@ start_own_xvfb() {
   return 1
 }
 
+# Atomically reserve $PIDFILE, or fail. `set -o noclobber` makes `>` fail when
+# the file exists, which is the atomic create-exclusive we need.
+#
+# Without this, two launches racing for the same port both write this one path:
+# the loser overwrites the winner's recorded pid and then deletes the file on
+# its own failure, leaving the winner's Unity with no cleanup handle. Measured —
+# it survived process exit as an orphan holding the port.
+#
+# This only separates launches that share a $RUNDIR (i.e. the same job). Across
+# jobs the paths differ, and separation falls to the bind test plus the
+# ownership check in the wait loop. The two layers cover different cases.
+claim_pidfile() {
+  # Write OUR OWN pid as the placeholder, not a word like "claiming": the
+  # staleness check below extracts digits, and a non-numeric placeholder reads
+  # as "no pid recorded" -- so the loser deleted the winner's fresh claim and
+  # took the port anyway. $$ is alive by definition, so the loser now backs off.
+  if ( set -o noclobber; echo "$$" > "$PIDFILE" ) 2>/dev/null; then
+    return 0
+  fi
+  # A file is already there. Respect it if it still refers to something real,
+  # otherwise treat it as debris from a crashed run and take it over.
+  local old
+  old="$(tr -dc '0-9' < "$PIDFILE" 2>/dev/null)"
+  if [[ -n "$old" ]] && pid_alive "$old"; then return 1; fi
+  if port_open "$PORT"; then return 1; fi
+  rm -f "$PIDFILE" 2>/dev/null || return 1
+  ( set -o noclobber; echo "claiming" > "$PIDFILE" ) 2>/dev/null
+}
+
 cleanup_failed_launch() {
   [[ -n "${UPID:-}" ]] && kill -9 "$UPID" 2>/dev/null
   [[ -n "${WRAPPER_PID:-}" ]] && kill -9 "$WRAPPER_PID" 2>/dev/null
@@ -219,6 +301,12 @@ if port_open "$PORT"; then
     echo "use --force to replace, or pick a different --port"
     exit 1
   fi
+fi
+
+if ! claim_pidfile; then
+  echo "port ${PORT} is already claimed by $(cat "$PIDFILE" 2>/dev/null || echo "?")"
+  echo "(pidfile $PIDFILE). Another launch is using this port — pick a different --port."
+  exit 1
 fi
 
 # --- launch -----------------------------------------------------------------
@@ -250,7 +338,7 @@ ps -o pgid= -p "$WRAPPER_PID" 2>/dev/null | tr -d ' ' > "$PGIDFILE" || rm -f "$P
 
 UPID=""
 for _ in {1..10}; do
-  UPID="$(unity_pid_for_port || true)"
+  UPID="$(our_unity_pid || true)"
   [[ -n "$UPID" ]] && break
   kill -0 "$WRAPPER_PID" 2>/dev/null || break
   sleep 1
@@ -269,13 +357,26 @@ fi
 echo "waiting up to 30s for port ${PORT}..."
 for i in {1..30}; do
   sleep 1
-  if port_open "$PORT"; then
-    echo "TCP server up on port ${PORT} after ${i}s (pid ${UPID})"
-    exit 0
-  fi
-  if ! kill -0 "$UPID" 2>/dev/null; then
+  # Liveness is checked BEFORE the port, and that ordering is the point: an open
+  # port proves *someone* is listening, not that it is ours. If our Unity lost a
+  # bind race to another job on this node and died, declaring success here would
+  # hand the caller a stranger's simulator and it would train against the wrong
+  # world with no error anywhere. That is not hypothetical -- three
+  # co-scheduled jobs all defaulting to :9000 did exactly this.
+  if ! pid_alive "$UPID"; then
     echo "Unity process died before opening port ${PORT}. last 40 log lines:"
     tail -40 "$LOG" 2>/dev/null
+    cleanup_failed_launch
+    exit 1
+  fi
+  if port_open "$PORT"; then
+    if port_held_by_pid "$PORT" "$UPID"; then
+      echo "TCP server up on port ${PORT} after ${i}s (pid ${UPID})"
+      exit 0
+    fi
+    echo "port ${PORT} is open but held by another process, not our Unity (${UPID}):"
+    [[ -n "$SS_BIN" ]] && "$SS_BIN" -tlnp 2>/dev/null | grep ":${PORT} " | sed 's/^/  /'
+    echo "refusing to attach to someone else's instance. pick a different --port."
     cleanup_failed_launch
     exit 1
   fi

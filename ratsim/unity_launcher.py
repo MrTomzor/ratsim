@@ -10,6 +10,11 @@ Supports two operational tiers:
    alive (debug-friendly); n_envs>1 always spawns fresh on a separate range
    so it can't clobber the persistent debug instance.
 
+Under SLURM (`$SLURM_JOB_ID` set) the node is shared with other users, so
+tier 1 is disabled — port 9000 is never reused, the default port window is
+derived from the job id, every port is bind-tested, and pidfiles live in
+per-job scratch rather than `/tmp`. None of that applies off SLURM.
+
 The intended usage from a training script::
 
     from ratsim.unity_launcher import allocate_unity_instances
@@ -44,17 +49,61 @@ n_envs=1 reuses this; n_envs>1 always spawns fresh elsewhere.
 """
 
 FRESH_PORT_BASE = 9100
-"""Starting port for auto-spawned training instances. Range 9100..9199."""
+"""Starting port for auto-spawned training instances. Range 9100..9999."""
+
+FRESH_PORT_WINDOW = 10
+"""Ports per job. Matches the 10-port gap convention in scheduler/ports.py."""
+
+FRESH_PORT_SPAN = 900
+"""Size of the 9100..9999 band the job-derived base port is spread across."""
+
+
+def _slurm_job_id() -> Optional[int]:
+    """This job's SLURM id, or None when not running under SLURM.
+
+    Presence of this variable is what switches the launcher into "shared
+    machine" mode: derive a per-job port window, scope pidfiles to per-job
+    scratch, and never reuse the persistent instance. Absent — the laptop
+    case — nothing below changes behaviour.
+    """
+    for var in ("SLURM_JOB_ID", "SLURM_JOBID"):
+        raw = os.environ.get(var, "")
+        if raw.isdigit():
+            return int(raw)
+    return None
+
 
 def _rundir() -> Path:
     """Directory holding pidfiles and Unity logs.
 
-    Must agree with ``RATSIM_RUNDIR`` in ``scripts/start_ratsim_headless.sh`` —
-    if the two disagree, this module reads a pidfile the launcher never wrote
-    and silently fails to kill the instance it spawned. Defaults to /tmp, which
-    is fine on a single-user box but is shared between jobs on a cluster node.
+    Precedence — this MUST stay identical to ``rundir`` in
+    ``scripts/start_ratsim_headless.sh``. If the two disagree, this module
+    reads a pidfile the launcher never wrote and silently fails to kill the
+    instance it spawned:
+
+    1. ``$RATSIM_RUNDIR`` if set — always wins.
+    2. Under SLURM: ``/mnt/job-<id>`` if it exists, else ``$TMPDIR``, else
+       ``/tmp/ratsim-job-<id>``. Bare ``/tmp`` is shared with other users' jobs
+       on the same node, so a colliding ``ratsim_<port>.pid`` would let one job
+       kill another's Unity.
+    3. ``/tmp`` — fine on a single-user box.
     """
-    return Path(os.environ.get("RATSIM_RUNDIR", "/tmp"))
+    explicit = os.environ.get("RATSIM_RUNDIR")
+    if explicit:
+        return Path(explicit)
+    jid = _slurm_job_id()
+    if jid is None:
+        return Path("/tmp")
+    node_scratch = Path(f"/mnt/job-{jid}")
+    if node_scratch.is_dir():
+        return node_scratch
+    tmpdir = os.environ.get("TMPDIR")
+    path = Path(tmpdir) if tmpdir else Path(f"/tmp/ratsim-job-{jid}")
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return Path("/tmp")
+    return path
 
 
 def _pidfile(port: int) -> Path:
@@ -86,6 +135,96 @@ def _port_open(port: int, host: str = "127.0.0.1", timeout: float = 0.5) -> bool
         return False
     finally:
         s.close()
+
+
+def _port_bindable(port: int) -> bool:
+    """True if we could bind ``port`` right now on all interfaces.
+
+    Stronger than ``_port_open()``: that only notices a socket already
+    *accepting*, so it misses a process that has bound but not yet started
+    accepting — and it is what made the old guard a check-then-act race. Two
+    jobs could both see "free", both launch, and the loser's client would then
+    attach to the *winner's* Unity and read another job's world. (Observed for
+    real: three co-scheduled jobs on one node all defaulting to 9000.)
+
+    Binding still leaves a millisecond window before Unity takes the port, so
+    this narrows the race rather than closing it. What actually closes it is the
+    launcher refusing to report success unless *our own* Unity pid is alive —
+    see ``start_ratsim_headless.sh``.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        # No SO_REUSEADDR on purpose: we want the same conflict Unity will get.
+        s.bind(("", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def _job_base_port(n_envs: int) -> int:
+    """Per-job starting port, so co-scheduled jobs don't fight over 9100.
+
+    Deterministic from the job id rather than probed, because SLURM ids are
+    sequential: concurrent jobs land in different windows without any shared
+    state. It is only a *starting point* — the caller still bind-tests every
+    port and moves on if one is taken, which is what handles foreign listeners
+    (the node probe found two already sitting in 9000-9999).
+    """
+    jid = _slurm_job_id()
+    assert jid is not None, "_job_base_port called outside SLURM"
+    stride = max(FRESH_PORT_WINDOW, -(-n_envs // FRESH_PORT_WINDOW) * FRESH_PORT_WINDOW)
+    n_windows = max(1, FRESH_PORT_SPAN // stride)
+    return FRESH_PORT_BASE + (jid % n_windows) * stride
+
+
+def default_base_port(n_envs: int = 1) -> int:
+    """Base port to start from when the caller has no preference.
+
+    ``FRESH_PORT_BASE`` off SLURM (unchanged laptop behaviour), a job-derived
+    window under it. Public so the scheduler's ``PortAllocator`` can start from
+    the same place instead of re-deriving it and drifting.
+    """
+    return FRESH_PORT_BASE if _slurm_job_id() is None else _job_base_port(n_envs)
+
+
+def _next_candidate_port(port: int, taken: set) -> int:
+    """First port at or after ``port`` that looks usable right now."""
+    while port <= 65535:
+        if port not in taken and port != PERSISTENT_PORT and _port_bindable(port):
+            return port
+        port += 1
+    raise RuntimeError("ran out of ports")
+
+
+def _spawn_first_free(binary: Path, start_port: int, taken: set,
+                      attempts: int = 8) -> int:
+    """Spawn one Unity on the first port that actually works; return that port.
+
+    A bind test can only ever say "free a moment ago" — two processes can pass
+    it simultaneously and both launch on the same port. So the bind test is the
+    hint and *this retry loop is the actual fix*: the launcher script refuses to
+    report success unless our own Unity owns the port, so a loser gets a non-zero
+    exit here and simply moves to the next port instead of quietly sharing the
+    winner's simulator.
+    """
+    port = start_port
+    last: Optional[Exception] = None
+    for attempt in range(attempts):
+        port = _next_candidate_port(port, taken)
+        try:
+            _spawn_via_script(binary, port)
+            return port
+        except RuntimeError as e:
+            last = e
+            print(f"[unity_launcher] port {port} did not come up cleanly "
+                  f"(attempt {attempt + 1}/{attempts}); trying the next one")
+            port += 1
+    raise RuntimeError(
+        f"could not get a Unity instance up after {attempts} ports starting at "
+        f"{start_port}. Last error: {last}"
+    )
 
 
 def _read_pidfile(port: int) -> Optional[int]:
@@ -229,6 +368,15 @@ def allocate_unity_instances(
         (default base_port :9100). Refuses to use port 9000. Requires
         RATSIM_UNITY_BIN.
 
+    **Under SLURM** (``$SLURM_JOB_ID`` set) two rules change, because the node
+    is shared with other users' jobs:
+      * the default base port is derived from the job id instead of being 9100
+        for everybody, and every port is bind-tested before use;
+      * :9000 is never reused. An open :9000 on a cluster node is far more
+        likely to be a stranger's process than your Editor, and attaching to it
+        would silently train against someone else's simulator.
+    Both are no-ops off SLURM, so laptop behaviour is unchanged.
+
     Returns one UnityInstance per env. ``.owned`` is True for spawned ones
     (cleaned up at process exit) and False for the reused persistent instance.
     """
@@ -236,12 +384,14 @@ def allocate_unity_instances(
         raise ValueError(f"n_envs must be >= 1, got {n_envs}")
 
     binary = _resolve_binary()
+    jid = _slurm_job_id()
     base_port_specified = base_port is not None
     if base_port is None:
-        base_port = FRESH_PORT_BASE
+        base_port = default_base_port(n_envs)
 
-    # n_envs=1 reuse path: only when the caller didn't ask for a specific port.
-    if n_envs == 1 and not fresh and not base_port_specified:
+    # n_envs=1 reuse path: only when the caller didn't ask for a specific port,
+    # and never on a shared cluster node (see docstring).
+    if n_envs == 1 and not fresh and not base_port_specified and jid is None:
         if _instance_alive(PERSISTENT_PORT):
             print(f"[unity_launcher] reusing existing instance on port {PERSISTENT_PORT}")
             return [UnityInstance(port=PERSISTENT_PORT, owned=False)]
@@ -255,34 +405,55 @@ def allocate_unity_instances(
         _register_cleanup(PERSISTENT_PORT)
         return [UnityInstance(port=PERSISTENT_PORT, owned=True)]
 
-    # Fresh-spawn path (n_envs > 1, fresh=True, or explicit base_port)
+    # Fresh-spawn path (n_envs > 1, fresh=True, explicit base_port, or SLURM)
     if binary is None:
+        extra = ""
+        if jid is not None:
+            extra = ("\nNote: under SLURM the persistent :9000 instance is never reused, "
+                     "so a build path is required even for n_envs=1.")
         raise RuntimeError(
             "auto-spawn requested but RATSIM_UNITY_BIN is unset.\n"
             "export RATSIM_UNITY_BIN=/path/to/ForagerSimBuild.x86_64 to enable multi-env training."
+            + extra
         )
 
-    ports = list(range(base_port, base_port + n_envs))
-    # Refuse to overwrite the persistent slot or any port already alive.
-    for p in ports:
-        if p == PERSISTENT_PORT:
-            raise ValueError(
-                f"fresh-spawn range {ports} overlaps the persistent port {PERSISTENT_PORT}; "
-                f"pick a different base_port"
-            )
-        if _instance_alive(p):
-            raise RuntimeError(
-                f"port {p} is already in use; kill it first "
-                f"(./scripts/stop_ratsim_headless.sh --port {p}) or pick a different base_port"
-            )
+    if base_port_specified:
+        # The caller named exact ports — most importantly the scheduler, which
+        # tracks the window it handed out. Silently shifting would desync its
+        # bookkeeping, so fail loudly instead.
+        ports = list(range(base_port, base_port + n_envs))
+        for p in ports:
+            if p == PERSISTENT_PORT:
+                raise ValueError(
+                    f"fresh-spawn range {ports} overlaps the persistent port {PERSISTENT_PORT}; "
+                    f"pick a different base_port"
+                )
+            if not _port_bindable(p):
+                raise RuntimeError(
+                    f"port {p} is already in use; kill it first "
+                    f"(./scripts/stop_ratsim_headless.sh --port {p}) or pick a different base_port"
+                )
+        instances: List[UnityInstance] = []
+        for p in ports:
+            _spawn_via_script(binary, p)
+            _register_cleanup(p)
+            instances.append(UnityInstance(port=p, owned=True))
+    else:
+        # Spawn one at a time and let each retry past a lost race, rather than
+        # picking all n ports up front: by the time instance k launches, the
+        # ports chosen for k+1.. may well have been taken by someone else.
+        instances = []
+        taken: set = set()
+        next_start = base_port
+        for _ in range(n_envs):
+            p = _spawn_first_free(binary, next_start, taken)
+            taken.add(p)
+            next_start = p + 1
+            _register_cleanup(p)
+            instances.append(UnityInstance(port=p, owned=True))
 
-    instances: List[UnityInstance] = []
-    for p in ports:
-        _spawn_via_script(binary, p)
-        _register_cleanup(p)
-        instances.append(UnityInstance(port=p, owned=True))
-
-    print(f"[unity_launcher] spawned {n_envs} fresh instances on ports {ports}")
+    ports = [i.port for i in instances]
+    print(f"[unity_launcher] spawned {n_envs} fresh instance(s) on ports {ports}")
     return instances
 
 
@@ -290,5 +461,6 @@ __all__ = [
     "UnityInstance",
     "PERSISTENT_PORT",
     "FRESH_PORT_BASE",
+    "default_base_port",
     "allocate_unity_instances",
 ]
