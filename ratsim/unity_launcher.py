@@ -46,7 +46,19 @@ n_envs=1 reuses this; n_envs>1 always spawns fresh elsewhere.
 FRESH_PORT_BASE = 9100
 """Starting port for auto-spawned training instances. Range 9100..9199."""
 
-PIDFILE_TEMPLATE = "/tmp/ratsim_{port}.pid"
+def _rundir() -> Path:
+    """Directory holding pidfiles and Unity logs.
+
+    Must agree with ``RATSIM_RUNDIR`` in ``scripts/start_ratsim_headless.sh`` —
+    if the two disagree, this module reads a pidfile the launcher never wrote
+    and silently fails to kill the instance it spawned. Defaults to /tmp, which
+    is fine on a single-user box but is shared between jobs on a cluster node.
+    """
+    return Path(os.environ.get("RATSIM_RUNDIR", "/tmp"))
+
+
+def _pidfile(port: int) -> Path:
+    return _rundir() / f"ratsim_{port}.pid"
 
 
 @dataclass
@@ -77,7 +89,7 @@ def _port_open(port: int, host: str = "127.0.0.1", timeout: float = 0.5) -> bool
 
 
 def _read_pidfile(port: int) -> Optional[int]:
-    p = Path(PIDFILE_TEMPLATE.format(port=port))
+    p = _pidfile(port)
     if not p.exists():
         return None
     try:
@@ -97,17 +109,26 @@ def _pid_alive(pid: int) -> bool:
 
 
 def _instance_alive(port: int) -> bool:
-    """Combined liveness: port is open AND, if a pidfile exists, that pid runs.
+    """Liveness: something is accepting TCP connections on ``port``.
 
-    The pidfile is written by start_ratsim_headless.sh. Editor Play mode and
-    manually-launched binaries won't have one — in that case we fall back to
-    just probing the port.
+    An open port is the authoritative signal — if a client can connect, there
+    is a Unity to attach to (Editor Play mode, a manually-launched binary, or
+    one we spawned). The pidfile written by start_ratsim_headless.sh is only
+    used for cleanup of instances *we* spawned, NOT for liveness: a stale
+    pidfile (e.g. an old headless build's, left behind while the Editor now
+    holds the port) must not mask a live listener, or we'd wrongly spawn a
+    fresh build on top of the running Editor instead of attaching to it.
     """
     if not _port_open(port):
         return False
+    # Port is live. If a stale pidfile points at a dead pid, drop it so it
+    # doesn't linger and confuse cleanup later — but the port is what counts.
     pid = _read_pidfile(port)
     if pid is not None and not _pid_alive(pid):
-        return False
+        try:
+            _pidfile(port).unlink(missing_ok=True)
+        except OSError:
+            pass
     return True
 
 
@@ -150,21 +171,38 @@ def _spawn_via_script(binary: Path, port: int, log_path: Optional[str] = None,
 
 
 def _kill_owned(port: int) -> None:
-    """Best-effort: kill the instance we spawned on this port."""
+    """Best-effort: kill the instance we spawned on this port.
+
+    The pidfile holds the *Unity* pid even when the launcher wrapped it in
+    ``xvfb-run``, so killing it is enough: xvfb-run tears down its own X server
+    once the command exits. The ``.xpid`` sidecar only exists on the fallback
+    path where the launcher started ``Xvfb`` itself; that server is started with
+    ``-terminate`` and should exit on its own, but reap it here too.
+    """
     pid = _read_pidfile(port)
-    if pid is None:
-        return
-    try:
-        os.kill(pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-    except OSError as e:
-        print(f"[unity_launcher] failed to kill pid {pid} on port {port}: {e}")
-    pidfile = Path(PIDFILE_TEMPLATE.format(port=port))
-    try:
-        pidfile.unlink(missing_ok=True)
-    except OSError:
-        pass
+    if pid is not None:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except OSError as e:
+            print(f"[unity_launcher] failed to kill pid {pid} on port {port}: {e}")
+    for suffix in ("pid", "xpid", "pgid"):
+        path = _rundir() / f"ratsim_{port}.{suffix}"
+        if suffix == "xpid":
+            try:
+                xpid = int(path.read_text().strip())
+            except (ValueError, OSError):
+                xpid = None
+            if xpid is not None:
+                try:
+                    os.kill(xpid, signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    pass
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _register_cleanup(port: int) -> None:
