@@ -316,13 +316,35 @@ def _launcher_script() -> Path:
     raise RuntimeError(f"could not locate start_ratsim_headless.sh (looked at {candidate})")
 
 
+def _boot_timeout() -> float:
+    """Seconds to allow one Unity instance to open its TCP port.
+
+    Must agree with BOOT_TIMEOUT in start_ratsim_headless.sh, which reads the
+    same variable — if this one is shorter, subprocess.run kills the script
+    mid-wait and the failure looks like a crash rather than a timeout.
+
+    Default 30 matches a single instance on an idle node (~1-2s measured, so a
+    wide margin). It is NOT enough during a launch storm: 7 concurrent runs at
+    n_envs=4 put ~20 Unity processes on the node while the rest were still
+    booting, boots crossed 30s, and all 7 runs failed. Raise it for packed jobs.
+    """
+    raw = os.environ.get("RATSIM_BOOT_TIMEOUT", "")
+    try:
+        v = float(raw)
+        return v if v > 0 else 30.0
+    except ValueError:
+        return 30.0
+
+
 def _spawn_via_script(binary: Path, port: int, log_path: Optional[str] = None,
-                      timeout_s: float = 30.0) -> None:
+                      timeout_s: Optional[float] = None) -> None:
     """Launch a Unity instance via start_ratsim_headless.sh and block until ready.
 
     The script handles the X display, pidfile, and per-port log. It exits 0 once
     the TCP listener is up.
     """
+    if timeout_s is None:
+        timeout_s = _boot_timeout()
     script = _launcher_script()
     cmd = [str(script), str(binary), "--port", str(port)]
     if log_path:

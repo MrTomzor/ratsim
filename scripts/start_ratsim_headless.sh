@@ -354,8 +354,17 @@ else
   UPID="$WRAPPER_PID"
 fi
 
-echo "waiting up to 30s for port ${PORT}..."
-for i in {1..30}; do
+# 30s is generous for one instance (measured: ~1-2s on an idle node) but far too
+# short during a launch storm. Packing 7 runs x 4 envs onto one node had ~20
+# Unity processes already competing while the next ones booted, and boots
+# started exceeding 30s -- every run in the job then failed, and the retries
+# collided with ports still being torn down. Raise it for heavily packed jobs:
+#   RATSIM_BOOT_TIMEOUT=180
+# Keep the default at 30 so single-run and laptop behaviour is unchanged.
+BOOT_TIMEOUT="${RATSIM_BOOT_TIMEOUT:-30}"
+[[ "$BOOT_TIMEOUT" =~ ^[0-9]+$ ]] || BOOT_TIMEOUT=30
+echo "waiting up to ${BOOT_TIMEOUT}s for port ${PORT}..."
+for ((i=1; i<=BOOT_TIMEOUT; i++)); do
   sleep 1
   # Liveness is checked BEFORE the port, and that ordering is the point: an open
   # port proves *someone* is listening, not that it is ours. If our Unity lost a
