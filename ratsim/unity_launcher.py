@@ -203,6 +203,15 @@ def _wait_port_bindable(port: int, timeout_s: float = 20.0) -> bool:
     So the right response to "busy" on a *requested* port is to wait for the
     known previous holder to go, not to fail (which kills the run) and not to
     move to another port (which desyncs the scheduler's accounting).
+
+    This is now a BACKSTOP, not the primary defence. 20 s turned out to be too
+    short for dreamer teardown on a loaded node — job 11325473 lost 4 of 4
+    dreamer re-dispatches this way, while 0 of 4 PPO ones failed. Rather than
+    guess a bigger number, the scheduler's PortAllocator now quarantines a
+    released window and tests it before reuse (scheduler/ports.py), so a run
+    normally gets a different window instead of waiting on this one. What is
+    left here is the residual race: the allocator tests a port, then the child
+    binds it a moment later.
     """
     deadline = time.monotonic() + timeout_s
     while True:
