@@ -2,7 +2,7 @@ prefab_name: SphereAgent
 name_prefix: rat1
 sensors:
   - name: lidar2d
-    maxRange: 20.0
+    maxRange: 30.0
     angleStartDeg: -90
     angleEndDeg: 90
     angleIncrementDeg: 10
