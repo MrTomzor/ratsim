@@ -404,6 +404,76 @@ def _register_cleanup(port: int) -> None:
     atexit.register(_kill_owned, port)
 
 
+DEFAULT_ATTACH_TIMEOUT = 300.0
+"""Seconds ``attach_instance`` waits for a Unity to appear. 0 = wait forever."""
+
+
+def attach_instance(
+    port: int = PERSISTENT_PORT,
+    timeout_s: Optional[float] = None,
+    poll_s: float = 1.0,
+) -> UnityInstance:
+    """Attach to a Unity that somebody else is running. NEVER spawns one.
+
+    This is the "I want to watch the agent in the Editor" entry point, and it
+    exists because ``allocate_unity_instances(n_envs=1)`` is the wrong default
+    for that job: if :9000 is not accepting *at that instant* it silently
+    spawns a headless build instead. With ``RATSIM_UNITY_BIN`` exported (the
+    normal state on a dev box) that turns "I forgot to press Play" into a run
+    against an invisible simulator — and since the launcher gained xvfb mode
+    the spawned instance renders to a throwaway X server, so there is nothing
+    to see anywhere and the Editor is left unable to bind :9000 afterwards.
+
+    Waiting is the right response instead: the Editor takes a few seconds to
+    enter Play mode, and a human is by definition present.
+
+    Args:
+        port: port to attach to. Default :9000, the persistent/Editor slot.
+        timeout_s: how long to wait. None reads ``$RATSIM_ATTACH_TIMEOUT``,
+            falling back to ``DEFAULT_ATTACH_TIMEOUT``. <= 0 waits forever.
+        poll_s: interval between probes.
+
+    Raises:
+        RuntimeError: if nothing is listening before the timeout.
+    """
+    if timeout_s is None:
+        raw = os.environ.get("RATSIM_ATTACH_TIMEOUT", "")
+        try:
+            timeout_s = float(raw) if raw else DEFAULT_ATTACH_TIMEOUT
+        except ValueError:
+            timeout_s = DEFAULT_ATTACH_TIMEOUT
+
+    if _instance_alive(port):
+        print(f"[unity_launcher] attached to existing instance on port {port}")
+        return UnityInstance(port=port, owned=False)
+
+    forever = timeout_s <= 0
+    deadline = None if forever else time.monotonic() + timeout_s
+    waited = "indefinitely" if forever else f"up to {timeout_s:.0f}s"
+    print(f"[unity_launcher] nothing listening on port {port} — waiting {waited}. "
+          f"Press Play in the Unity Editor (or run scripts/start_ratsim_headless.sh). "
+          f"Nothing will be spawned.")
+    last_note = time.monotonic()
+    while True:
+        time.sleep(poll_s)
+        if _instance_alive(port):
+            print(f"[unity_launcher] attached to existing instance on port {port}")
+            return UnityInstance(port=port, owned=False)
+        now = time.monotonic()
+        if now - last_note >= 15.0:
+            left = "" if forever else f" ({deadline - now:.0f}s left)"
+            print(f"[unity_launcher] still waiting for port {port}{left}...")
+            last_note = now
+        if deadline is not None and now >= deadline:
+            raise RuntimeError(
+                f"no Unity accepting connections on port {port} after {timeout_s:.0f}s.\n"
+                f"Either press Play in the Editor, or start one yourself "
+                f"(scripts/start_ratsim_headless.sh <build> --port {port}), or ask the "
+                f"caller to spawn a build instead (eval scripts: --spawn; raise the wait "
+                f"with RATSIM_ATTACH_TIMEOUT=<seconds>, 0 to wait forever)."
+            )
+
+
 def allocate_unity_instances(
     n_envs: int = 1,
     fresh: bool = False,
@@ -520,6 +590,8 @@ __all__ = [
     "UnityInstance",
     "PERSISTENT_PORT",
     "FRESH_PORT_BASE",
+    "DEFAULT_ATTACH_TIMEOUT",
     "default_base_port",
     "allocate_unity_instances",
+    "attach_instance",
 ]
