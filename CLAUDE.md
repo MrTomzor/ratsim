@@ -82,9 +82,19 @@ Port conventions:
   Multiple parallel runs should use non-overlapping subranges (e.g. run A on
   9100–9107, run B on 9110–9117) — pass a different `base_port` per run.
 
-Liveness check (`_instance_alive`) combines a TCP probe with a pidfile read at
-`/tmp/ratsim_<port>.pid` (written by `start_ratsim_headless.sh`). Editor Play
-mode and manual launches won't have a pidfile — port-only is the fallback.
+Liveness check (`_instance_alive`) is an open-port TCP probe: if a client can
+connect, there's a Unity to attach to (Editor Play mode, a manual launch, or a
+spawned build). The pidfile at `$RATSIM_RUNDIR/ratsim_<port>.pid` (written by
+`start_ratsim_headless.sh`; `$RATSIM_RUNDIR` defaults to `/tmp`) is used only
+for cleanup of instances we spawned, NOT for liveness — a stale pidfile must not
+mask a live listener, otherwise an n_envs=1 run would spawn a fresh build on top
+of a running Editor on 9000 instead of attaching to it. Stale dead-pid pidfiles
+are cleared on probe.
+
+`$RATSIM_RUNDIR` must be the same for the script and for `unity_launcher.py`
+(`_rundir()`) — if they disagree, Python reads a pidfile the script never wrote
+and silently fails to kill what it spawned. Point it at per-job scratch on any
+machine where several runs share `/tmp`, or one job will kill another's Unity.
 
 The launcher does not handle SIGTERM/SIGKILL on the parent process — if Python
 dies hard, spawned Unity instances become orphans. Clean up with
@@ -94,15 +104,32 @@ dies hard, spawned Unity instances become orphans. Clean up with
 
 - **`setup_headless_display.sh`** — one-time `sudo` setup of an Xorg server on
   `:99` (NVIDIA-backed when available, llvmpipe fallback). Installed as a
-  systemd unit. Re-run only after driver changes.
-- **`start_ratsim_headless.sh [<bin>] [--port N] [--log path] [--force]`** —
-  launches a Unity build attached to `:99` on the given port (default 9000).
-  Writes a pidfile at `/tmp/ratsim_<port>.pid` and per-port log
-  `/tmp/ratsim_<port>.log`. Refuses to clobber a live port unless `--force`.
-  `<bin>` falls back to `$RATSIM_UNITY_BIN`.
+  systemd unit. Re-run only after driver changes. Only needed for `gfx` mode
+  below.
+- **`start_ratsim_headless.sh [<bin>] [--port N] [--log path] [--force]
+  [--xvfb|--gfx]`** — launches a Unity build on the given port (default 9000).
+  `<bin>` falls back to `$RATSIM_UNITY_BIN`. Writes a pidfile at
+  `$RATSIM_RUNDIR/ratsim_<port>.pid` and per-port log
+  `$RATSIM_RUNDIR/ratsim_<port>.log`. Refuses to clobber a live port unless
+  `--force`. Two display modes:
+  - **`xvfb`** (default when xvfb is installed) — starts a throwaway X server
+    for this instance and runs Unity `-batchmode -nographics`. No root needed,
+    works on an HPC node, **~2.2× faster**. Uses `xvfb-run -a` when present,
+    otherwise starts `Xvfb` itself on a free display (`-terminate`, so it exits
+    with Unity). The pidfile holds the **Unity** pid, not the `xvfb-run`
+    wrapper's — the wrapper's child survives killing the wrapper, so a wrapper
+    pid there would leave an instance holding the port. Sidecars
+    `.pgid` / `.xpid` let the stop path reap the wrapper and our own Xvfb.
+  - **`gfx`** — attaches to an existing server (default `:99`, override with
+    `$DISPLAY_NUM`) and renders normally. **Required for camera/RGBD agents**:
+    `-nographics` gives Unity a null graphics device. Verifies the X socket
+    exists first — Unity segfaults against a `DISPLAY` with no server behind it.
+
+  Force a mode with `--xvfb`/`--gfx` or `RATSIM_XVFB=1`/`0`.
 - **`stop_ratsim_headless.sh (--port N | --all | <bin>)`** — pidfile-based
-  shutdown for headless launches; legacy basename match still supported for
-  Editor / manual runs that don't write a pidfile.
+  shutdown for headless launches, including the X server the launcher started
+  for that instance; legacy basename match still supported for Editor / manual
+  runs that don't write a pidfile.
 
 ## Topic Naming Conventions
 - Agent-specific: `/rat1_pose`, `/rat1_velocity`, `/rat1_teleport`
