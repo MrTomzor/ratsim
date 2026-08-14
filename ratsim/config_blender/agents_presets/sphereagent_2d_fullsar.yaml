@@ -10,8 +10,8 @@ sensors:
     occlusionDistance: 0.5
     semanticSet: full_semantic_set
   - name: odom
+    rl_scaling_mode: automatic
   - name: collision
-  - name: relative_pose
   - name: compass
     biasRad: 0.0
   - name: sector_signal
