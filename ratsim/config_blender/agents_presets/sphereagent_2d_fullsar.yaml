@@ -10,6 +10,9 @@ sensors:
     occlusionDistance: 0.5
     semanticSet: full_semantic_set
   - name: odom
+  - name: relative_pose
+    # Position-from-spawn divisor tracks the arena instead of a flat 300, so the
+    # 1000x1000 `default` world no longer pushes gps outside Box(-1, 1).
     rl_scaling_mode: automatic
   - name: collision
   - name: compass
