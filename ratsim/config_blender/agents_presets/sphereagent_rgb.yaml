@@ -3,7 +3,6 @@ name_prefix: agent1
 sensors:
   - name: rgbd
     captureDepth: false
-  - name: odom
   - name: sector_signal
     channels: reward
     nSectors: 8

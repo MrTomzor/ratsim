@@ -2,7 +2,6 @@ prefab_name: SphereAgent
 name_prefix: agent1
 sensors:
   - name: rgbd
-  - name: odom
   - name: sector_signal
     channels: reward
     nSectors: 8
