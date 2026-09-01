@@ -56,7 +56,7 @@ barriers/prefab_name: barrier_basic    # Resources/WorldGen/BarrierPrefabs/
 barriers/height: 3.0
 barriers/thickness: 0.3
 barriers/stretch_walls_to_fit_cell_size: 1
-barriers/stretch_walls_cell_size_percentage: 0.95   # paper ~0.85 (impassable end-gaps)
+barriers/stretch_walls_cell_size_percentage: 1   # paper ~0.85 (impassable end-gaps)
 
 # Where the agent spawns — INDEPENDENT of Home selection. Default: start AT the Home
 # well (in the home_well_room). Alternatives:
