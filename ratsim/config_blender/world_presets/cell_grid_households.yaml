@@ -1,5 +1,5 @@
-# "Households + gardens": a 3x2 grid of fenced cells (gardens), narrow holes in the fences so
-# every cell is reachable, and ONE house per cell at a random position and free rotation.
+# "Households + gardens": a 3x2 grid of fenced cells (gardens), one hole in every fence between
+# neighbouring cells, and ONE house per cell at a random position and free rotation.
 # Houses and rewards match empty_box_130_houses_l: house_simplest only, four rewards per
 # house, no doors, no roofs. Fences come from the cell_grid maze mode; the
 # house fill is the CityLoader scatter pointed at the cell rooms (city/parent_types: cell).
@@ -8,7 +8,7 @@
 # fence 2 m, border ring 2 m: grid = 3*56 + 2*2 + 2*2 = 176 m x 2*52 + 2 + 4 = 110 m.
 # house_simplest footprint is 36 x 32 m (diagonal 48 m), so with margin 3 m any rotation fits
 # a 56x52 cell. The margin keeps the house off the fence and clear of every hole.
-# Fence gaps are 1 cell = 2 m (hole_cells); raise to 2 for 4 m gaps.
+# Fence gaps are 2 cells = 4 m (hole_cells).
 
 seed: 42
 chunk_width: 64
@@ -43,10 +43,10 @@ maze/cell_grid/cell_w_cells: 28
 maze/cell_grid/cell_h_cells: 26
 maze/cell_grid/fence_cells: 1
 maze/cell_grid/outer_fence_cells: 1
-maze/cell_grid/holes: spanning_tree
-maze/cell_grid/extra_hole_probability: 0.3
+maze/cell_grid/holes: all                    # every pair of neighbouring cells connected
+maze/cell_grid/extra_hole_probability: 0.0
 maze/cell_grid/hole_position: random
-maze/cell_grid/hole_cells: 1                 # 2 m gap
+maze/cell_grid/hole_cells: 2                 # 4 m gap
 maze/cell_grid/margin_floor: 0
 
 maze/rooms/types: "cell"
