@@ -1,7 +1,7 @@
 # "Households + gardens": a 3x2 grid of fenced cells (gardens), narrow holes in the fences so
 # every cell is reachable, and ONE house per cell at a random position and free rotation.
-# Houses and rewards match empty_box_130_houses_l: house_simplest / house_simplest_v2 (3:2),
-# four rewards per house, no doors, no roofs. Fences come from the cell_grid maze mode; the
+# Houses and rewards match empty_box_130_houses_l: house_simplest only, four rewards per
+# house, no doors, no roofs. Fences come from the cell_grid maze mode; the
 # house fill is the CityLoader scatter pointed at the cell rooms (city/parent_types: cell).
 #
 # Geometry (maze/cell_size = 2 m): cells 28x26 cells = 56x52 m, fences 1 cell = 2 m, outer
@@ -55,9 +55,7 @@ maze/rooms/cell/max: -1
 
 # ── Fill: one house per cell ──
 city/parent_types: cell
-city/cell/allowed_houses: "house_simplest, house_simplest_v2"
-city/cell/house_simplest/probability: 2
-city/cell/house_simplest_v2/probability: 3
+city/cell/allowed_houses: house_simplest
 city/cell/max_houses: 1
 city/cell/max_attempts: 50
 city/cell/house_spacing: 0
@@ -80,8 +78,7 @@ agents_spawn_pos/allowed_structures: "cell"
 agents_spawn_pos/denied_structures: "house"
 agents_spawn_pos/randomize_rotation: 1
 
-# ── Rewards: four per house (as in empty_box_130_houses_l; the 'house_simplest' entry
-#    matches house_simplest_v2 too — structure types are matched by prefix) ──
+# ── Rewards: four per house (as in empty_box_130_houses_l) ──
 reward_objects/prefab_name: reward_obj1
 reward_objects/uniform_density: "0"
 reward_objects/boundary_buffer: "30"
