@@ -1,0 +1,66 @@
+# Cell-grid ("households + gardens") smoke preset: a 4x3 grid of fenced cells with holes
+# in the fences, a random spanning tree of holes (+20% extras) so every cell is reachable,
+# and one reward per cell at a random interior slot. No houses yet — the modular fill
+# (one house per cell) is the next step; see WORLDGEN_RULES_DESIGN.md.
+#
+# Geometry: maze/cell_size = 1 m. Cells 10x8 m, fences 1 m, outer fence 1 m, border wall
+# ring 1 m: grid = 4*10 + 3*1 + 2*1 = 45 m wide, 3*8 + 2*1 + 2*1 = 28 m tall.
+# world_bounds 50x34 leaves the block centred with a solid margin (margin_floor: 0).
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 50
+world_bounds/height: 34
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+layout/mode: maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+maze/mode: cell_grid
+maze/cell_size: 1.0
+maze/wall_height: 3.0
+maze/border_walls: 1
+maze/edge_walls_only: 1
+maze/semantic_name: maze_wall
+
+maze/cell_grid/cols: 4
+maze/cell_grid/rows: 3
+maze/cell_grid/cell_w_cells: 10
+maze/cell_grid/cell_h_cells: 8
+maze/cell_grid/fence_cells: 1
+maze/cell_grid/outer_fence_cells: 1
+maze/cell_grid/holes: spanning_tree      # all | spanning_tree | random | none
+maze/cell_grid/extra_hole_probability: 0.2
+maze/cell_grid/hole_position: random     # center | random
+maze/cell_grid/hole_cells: 2
+maze/cell_grid/margin_floor: 0
+
+# Every cell is a room; label them all "cell" (one type, unlimited).
+maze/rooms/types: "cell"
+maze/rooms/cell/min: 0
+maze/rooms/cell/max: -1
+
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "cell"
+agents_spawn_pos/randomize_rotation: 1
+
+# One reward per cell at a random interior slot.
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0"
+reward_objects/allowed_structures: "cell"
+reward_objects/cell/min_per_structure: "1"
+reward_objects/cell/max_per_structure: "1"
+
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"

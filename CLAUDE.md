@@ -58,6 +58,30 @@ observations = connector.read_messages_from_unity()
 msgs = connector.get_received_messages("/lidar2d")
 ```
 
+## Worldgen Dump & Compare (`ratsim/worldgen_dump.py`)
+
+Verification tool for world generation. With `worldgen_dump/enabled: 1` in the world
+config, Unity publishes a JSON snapshot of every structure, reward, well and agent on
+`/sim_control/worldgen_dump` one frame after generation (see `WorldGenDump.cs`).
+`fetch_worldgen_dump(conn, world_config, seed)` drives a reset with that flag and returns
+the parsed dict; `diff_dumps(a, b)` lists differences (structures matched by geometry, not
+by the per-process `DeterministicId`; objects as a multiset by kind/name/position).
+
+```bash
+python -m ratsim.worldgen_dump dump maze_memorymaze_11x11 --seed 42 --out /tmp/a.json
+python -m ratsim.worldgen_dump compare default rules_default --seed 42
+python -m ratsim.worldgen_dump compare-prefix rules_        # every preset vs its rules_ twin
+```
+
+Needs the Editor/build in play mode on port 9000 (`--port` to override). Used to check that
+a preset rewritten in the generation-rules language reproduces the same world, and as a
+regression test for loader changes. Known limits (both pre-existing sim behaviour): retry
+seeds derived via `System.HashCode.Combine` differ between Unity processes, so compare
+within one session; and collision-checked uniform reward spawns in chunks loaded during
+the reset frame see the previous episode's colliders, so consecutive resets of a world with
+`reward_objects/uniform_density > 0` can differ — interleave an empty world or compare
+structure-mode presets.
+
 ## Unity Instance Launcher (`ratsim/unity_launcher.py`)
 
 `allocate_unity_instances(n_envs, fresh=False)` is the single entry point for
