@@ -1,0 +1,90 @@
+# "Households + gardens": a 3x2 grid of fenced cells (gardens), one hole in every fence between
+# neighbouring cells, and ONE house per cell at a random position and free rotation.
+# Houses and rewards match empty_box_130_houses_l: house_simplest only, four rewards per
+# house, no doors, no roofs. Fences come from the cell_grid maze mode; the
+# house fill is the CityLoader scatter pointed at the cell rooms (city/parent_types: cell).
+#
+# Geometry (maze/cell_size = 2 m): cells 28x26 cells = 56x52 m, fences 1 cell = 2 m, outer
+# fence 2 m, border ring 2 m: grid = 3*56 + 2*2 + 2*2 = 176 m x 2*52 + 2 + 4 = 110 m.
+# house_simplest footprint is 36 x 32 m (diagonal 48 m), so with margin 3 m any rotation fits
+# a 56x52 cell. The margin keeps the house off the fence and clear of every hole.
+# Fence gaps are 2 cells = 4 m (hole_cells).
+
+seed: 42
+chunk_width: 64
+
+height_generation/mode: superflat
+height_generation/superflat_height: 0
+
+vegetation/allowed_prefabs: ""
+house_generation/mode: uniform
+house_generation/allowed_prefabs: ""
+
+world_bounds/width: 182
+world_bounds/height: 116
+world_bounds/structures_margin: 0
+world_bounds/boundary_type: visible_wall
+world_bounds/boundary_height: 20
+
+layout/mode: maze
+layout/structures/types: ""
+layout/roads/mode: none
+
+maze/mode: cell_grid
+maze/cell_size: 2.0
+maze/wall_height: 3.0
+maze/border_walls: 1
+maze/edge_walls_only: 1
+maze/semantic_name: maze_wall
+
+maze/cell_grid/cols: 3
+maze/cell_grid/rows: 2
+maze/cell_grid/cell_w_cells: 28
+maze/cell_grid/cell_h_cells: 26
+maze/cell_grid/fence_cells: 1
+maze/cell_grid/outer_fence_cells: 1
+maze/cell_grid/holes: spanning_tree                    # all / spanning_tree
+maze/cell_grid/extra_hole_probability: 0.0
+maze/cell_grid/hole_position: random
+maze/cell_grid/hole_cells: 2                 # 4 m gap
+maze/cell_grid/margin_floor: 0
+
+maze/rooms/types: "cell"
+maze/rooms/cell/min: 0
+maze/rooms/cell/max: -1
+
+# ── Fill: one house per cell ──
+city/parent_types: cell
+city/cell/allowed_houses: house_simplest
+city/cell/max_houses: 1
+city/cell/max_attempts: 50
+city/cell/house_spacing: 0
+city/cell/margin: 3.0
+city/cell/rotation: free                     # steps90 | steps90_fit | aligned | free
+city/cell/layout_mode: random                # (default for non-city containers; grid = city road grid)
+
+house/allowed_door_prefabs: "door1,door2"
+house/door1/probability: "0"
+house/door2/probability: "0"
+house/enable_roofs: "0"
+house/chance_wall_broken: "0"
+house/rubble_prefab: rubble_dense_small
+house/clutter_density: "0.5"
+house/car_spawn_chance: "0"
+
+# ── Agent: start in a garden, not inside a house ──
+agents_spawn_pos/mode: in_structures
+agents_spawn_pos/allowed_structures: "cell"
+agents_spawn_pos/denied_structures: "house"
+agents_spawn_pos/randomize_rotation: 1
+
+# ── Rewards: four per house (as in empty_box_130_houses_l) ──
+reward_objects/prefab_name: reward_obj1
+reward_objects/uniform_density: "0"
+reward_objects/boundary_buffer: "30"
+reward_objects/allowed_structures: "house_simplest"
+reward_objects/house_simplest/min_per_structure: "4"
+reward_objects/house_simplest/max_per_structure: "4"
+
+smoke/global_smoke_enabled: "0"
+chaotic_walkers/enabled: "0"
