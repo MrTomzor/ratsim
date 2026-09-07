@@ -8,7 +8,7 @@ sensors:
     angleIncrementDeg: 10
     occlusionRegion: none
     occlusionDistance: 0.5
-    semanticSet: full_semantic_set
+    semanticSet: reward_smoke_rubble_walkers_boundary
   - name: relative_pose
     # Position-from-spawn divisor tracks the arena instead of a flat 300, so the
     # 1000x1000 `default` world no longer pushes gps outside Box(-1, 1).
