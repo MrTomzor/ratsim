@@ -120,8 +120,9 @@ class TaskTracker:
                 et = self.exploration_tracker
                 print(
                     f"[TaskTracker] volumetric exploration enabled: "
-                    f"world={self.vol_world_width}x{self.vol_world_height}m, "
-                    f"grid={et.cells_x}x{et.cells_y} cells @ {et.resolution}m/cell, "
+                    f"world={self.vol_world_width}x{self.vol_world_height}m "
+                    f"(width=Unity X=ROS y, height=Unity Z=ROS x), "
+                    f"grid={et.cells_x}x{et.cells_y} cells (ROS x by ROS y) @ {et.resolution}m/cell, "
                     f"origin=({et.origin_x:.1f}, {et.origin_y:.1f}) [ROS frame], "
                     f"reward={self.vol_reward_per_m2}/m², "
                     f"pose_topic={self.pose_topic!r}, lidar_topic={self.lidar_topic!r}",

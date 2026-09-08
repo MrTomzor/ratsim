@@ -64,9 +64,17 @@ class ExplorationTracker:
     The grid spans a rectangle of size ``world_width`` x ``world_height``
     centered on the origin (maze center in ROS frame).
 
+    ``world_width`` / ``world_height`` follow the worldgen convention of
+    ``world_bounds/width|height``: width is the extent along Unity +X and
+    height the extent along Unity +Z (see ``WorldLayoutLoader.PlaceStructures``).
+    ``CoordConversion`` maps Unity X -> ROS -y and Unity Z -> ROS x, so in the
+    ROS frame the grid is ``world_height`` long along x and ``world_width``
+    long along y.  (Until 2026-09 this was swapped, so any non-square world
+    had most of its area outside the grid.)
+
     Attributes:
         resolution: cell size in meters (square cells).
-        cells_x, cells_y: grid dimensions.
+        cells_x, cells_y: grid dimensions along ROS x / ROS y.
         origin_x, origin_y: world coords of the (0,0) cell's bottom-left corner.
         grid: int8 array shape (cells_y, cells_x).
     """
@@ -81,8 +89,9 @@ class ExplorationTracker:
         self.world_width = float(world_width)
         self.world_height = float(world_height)
 
-        self.cells_x = int(math.ceil(self.world_width / self.resolution))
-        self.cells_y = int(math.ceil(self.world_height / self.resolution))
+        # ROS x (Unity Z) spans world_height; ROS y (Unity X) spans world_width.
+        self.cells_x = int(math.ceil(self.world_height / self.resolution))
+        self.cells_y = int(math.ceil(self.world_width / self.resolution))
 
         # Origin = bottom-left corner of grid, world centered at (0, 0)
         self.origin_x = -self.cells_x * self.resolution / 2.0
@@ -254,6 +263,8 @@ class ExplorationTracker:
         # Transpose to (ROS x, ROS y) so axis 0 = ROS x, axis 1 = ROS y.
         # Flip axis 0 so high ROS x (Unity +Z = forward) renders at the top.
         # Flip axis 1 so high ROS y (Unity −X = left) renders on the left.
+        # Result is (cells_x, cells_y, 3) = (height cells, width cells, 3):
+        # a landscape world renders as a landscape image.
         img = np.transpose(img, (1, 0, 2))
         img = np.flip(img, axis=0)
         img = np.flip(img, axis=1)
