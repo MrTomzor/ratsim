@@ -68,6 +68,7 @@ def run_human_session(
     seed: int | None = None,
     rtf: float = 1.0,
     max_steps: int | None = None,
+    record_trajectory: bool = False,
 ) -> dict:
     """Run a single human-controlled episode. Returns metrics dict when the episode ends.
 
@@ -75,6 +76,8 @@ def run_human_session(
     Blocks until episode termination or truncation.
     If max_steps is None, uses the task config's episode_max_steps.
     If max_steps <= 0, the episode runs indefinitely (no truncation).
+    With record_trajectory=True the returned dict also carries "trajectory"
+    (TaskTracker.get_trajectory() arrays) for plotting.
     """
     flat_world = flatten_config(world_config)
     flat_agent = flatten_config(agent_config)
@@ -85,6 +88,7 @@ def run_human_session(
         world_height=float(flat_world["world_bounds/height"]) if "world_bounds/height" in flat_world else None,
         pose_topic=f"/{agent_prefix}/gt_pose",
         lidar_topic="/lidar2d",
+        record_trajectory=record_trajectory,
     )
     tracker.reset()
 
@@ -176,7 +180,8 @@ def run_human_session(
     conn.send_messages_and_step(enable_physics_step=False)
     conn.read_messages_from_unity()
 
-    return {
+    result = {
+        "world_seed": cfg.get("seed"),
         "steps": step_count,
         "total_score": tracker.get_total_score(),
         "objects_found": tracker.get_num_reward_objs_picked_up(),
@@ -188,6 +193,9 @@ def run_human_session(
         "reload_requested": reload_requested,
         "quit_requested": quit_requested,
     }
+    if record_trajectory:
+        result["trajectory"] = tracker.get_trajectory()
+    return result
 
 
 def main():

@@ -44,6 +44,9 @@ python record_human_trajectory.py output.pickle   # Record trajectory
 - **Exploration reward** is driven by TaskTracker when `volumetric_exploration_settings` is present in the task config: each step's newly-known cell area × `reward_per_m2` is added to the step score. Config keys: `reward_per_m2`, `grid_resolution` (m/cell), `visualize` (bool — live matplotlib viewer), `debug` (0/1/2 verbosity), `debug_every` (print period).
 - **Pose topic for exploration**: the tracker subscribes to the agent's ground-truth pose (`/<name_prefix>/gt_pose`, published by `AbsolutePose2DSensor` which AgentLoader force-enables regardless of the user's `sensors` config — this sensor is not exposed as an RL observation, it's infrastructure). The lidar angle convention differs between Unity (`sin(θ), 0, cos(θ)`, CW from +Z) and ROS math (CCW from +x), so the tracker negates `angleStartDeg`/`angleIncrementDeg` when converting to radians — without this the occupied hits get mirrored left↔right around the agent.
 
+- **Trajectory recording** (opt-in, `record_trajectory=True` on `TaskTracker`): every update appends the ground-truth pose (ROS frame) + step index and notes pickup steps; `get_trajectory()` returns numpy arrays, `reset()` clears. Off by default — eval scripts turn it on for a few episodes, training never does. `trajectory_record.py` saves/loads one episode as `.npz` with a JSON `meta` block (method, world seed, world bounds).
+- `ratsim_vis/trajectory_plot.py` — `plot_trajectories(ax, trajs, world_bounds=...)` draws recorded trajectories on a blank top-down slate in Unity frame (x right = ROS −y, z up = ROS +x), start/end/pickup markers, optional colour-by-time. `background` + `view_proj` (Unity 4x4 view-projection) project the same points onto a rendered image via `project_to_pixels` — orthographic, isometric and perspective cameras share that path.
+
 ### Deprecated: `ratsim/nav_DEPRECATED/`
 Legacy navigation module (noise models, reactive controller, occupancy mapping). Being phased out.
 
@@ -57,6 +60,30 @@ connector.send_messages_and_step(enable_physics_step=True)
 observations = connector.read_messages_from_unity()
 msgs = connector.get_received_messages("/lidar2d")
 ```
+
+## World Snapshot (`ratsim/world_snapshot.py`)
+
+Overhead pictures of a generated world, for figures. With `world_snapshot/enabled: 1` (+
+`world_snapshot/view` etc.) in the world config Unity renders the whole world once after
+generation (`WorldSnapshot.cs`) and publishes the PNG as an `RGBDMessage` on
+`/sim_control/world_snapshot` and the camera metadata as JSON in a `StringMessage` on
+`/sim_control/world_snapshot_meta` — existing message types only.
+`fetch_world_snapshot(conn, world_config, seed, view, width)` drives that reset and returns
+`{"image": (H,W,3) uint8, "meta": {...view_proj (4x4)...}}`; `save_snapshot(stem, snap)` writes
+`<stem>.png` + `<stem>.json`, `load_snapshot(path)` reads a pair back. Views, both straight
+down with image up = Unity +Z: `ortho` (orthographic camera, a true map; `topdown` alias) and
+`persp` (perspective camera high above the world); any `world_snapshot/*` key via `extra`.
+The client forces `maze/edge_walls_only: 0` so maze walls render solid. The saved matrix is
+exactly what `ratsim_vis/trajectory_plot.plot_trajectories(background=, view_proj=)` expects,
+so trajectories project onto either view through the same code.
+
+```bash
+python -m ratsim.world_snapshot --world_preset three_malls --seed 42 --views ortho,persp --out figs/
+python -m ratsim.world_snapshot --world_config <run>/eval_world_config.json --seed 1662057957 --out figs/
+```
+
+Needs Unity in play mode on port 9000 (`--port`) with a real graphics device (not
+`-nographics`).
 
 ## Worldgen Dump & Compare (`ratsim/worldgen_dump.py`)
 

@@ -32,6 +32,15 @@ class TaskTracker:
         values in the exploration settings; pass ``world_width`` /
         ``world_height`` to ``__init__`` to let the env override them from
         its worldgen config (e.g. ``world_bounds/width``).
+
+    Trajectory recording (optional, off by default):
+        With ``record_trajectory=True`` every ``update_with_unity_msgs`` call
+        appends the agent's ground-truth pose (ROS frame: x forward, y left,
+        z up, yaw CCW rad) and the step index to an in-memory buffer, and the
+        steps at which reward pickups happened are noted.  ``get_trajectory()``
+        returns it as numpy arrays; ``reset()`` clears it.  Cost is one tuple
+        append per step, so it is safe to leave on for a whole eval, but it is
+        meant for a handful of episodes, not training.
     """
 
     # Topic suffixes (matched against the end of every incoming topic name)
@@ -48,8 +57,13 @@ class TaskTracker:
         world_height: "float | None" = None,
         pose_topic: "str | None" = None,
         lidar_topic: "str | None" = None,
+        record_trajectory: bool = False,
     ):
         self.episode_max_steps = task_config.get("episode_max_steps", 300)
+
+        # Per-step pose buffer (opt-in — eval scripts turn it on for a few
+        # episodes; training never does). Consumed via get_trajectory().
+        self.record_trajectory = bool(record_trajectory)
 
         foraging = task_config.get("foraging_settings", {})
         self.pickup_reward_modifier = foraging.get("reward_object_pickup_modifier", 1.0)
@@ -153,6 +167,9 @@ class TaskTracker:
         self._rays_total = 0
         self._rays_out_of_bounds = 0
         self._rays_zero_len = 0
+        self._update_count = 0
+        self._traj_rows: list = []          # (step, x, y, z, yaw)
+        self._traj_pickup_steps: list = []
         if self.exploration_tracker is not None:
             self.exploration_tracker.reset()
 
@@ -164,6 +181,7 @@ class TaskTracker:
                   as returned by RoslikeUnityConnector.read_messages_from_unity().
         """
         self._step_score = 0.0
+        self._update_count += 1
 
         # --- Collisions (any agent) ---
         for col_vel in self._get_values_by_suffix(msgs, self._COLLISION_SUFFIX):
@@ -200,6 +218,8 @@ class TaskTracker:
         if num_pickups > 0:
             self._step_score += num_pickups * self.pickup_reward_modifier
             self._num_reward_objs_picked_up += num_pickups
+            if self.record_trajectory:
+                self._traj_pickup_steps.extend([self._update_count] * num_pickups)
             print(f"[TaskTracker] Picked up {num_pickups} objects, score += {num_pickups * self.pickup_reward_modifier:.2f}")
 
         # --- Battery depletion (any agent) ---
@@ -226,7 +246,21 @@ class TaskTracker:
         if self.vol_enabled and self.exploration_tracker is not None:
             self._update_exploration(msgs)
 
+        # --- Trajectory buffer (opt-in) ---
+        if self.record_trajectory:
+            self._record_pose(msgs)
+
         self._total_score += self._step_score
+
+    def _record_pose(self, msgs: dict):
+        pose_msg = self._find_pose_msg(msgs)
+        if pose_msg is None:
+            return
+        yaw = yaw_from_quat(pose_msg.qx, pose_msg.qy, pose_msg.qz, pose_msg.qw)
+        self._traj_rows.append((
+            self._update_count,
+            float(pose_msg.x), float(pose_msg.y), float(pose_msg.z or 0.0), float(yaw),
+        ))
 
     def _update_exploration(self, msgs: dict):
         pose_msg = self._find_pose_msg(msgs)
@@ -384,6 +418,25 @@ class TaskTracker:
     def get_explored_area_m2(self) -> float:
         """Return cumulative area explored (newly-known cells) this episode."""
         return self._exploration_area_m2
+
+    def get_trajectory(self) -> "dict | None":
+        """Return this episode's recorded poses, or None if recording is off.
+
+        Keys: ``steps`` (N,) int32 — update index (1-based) of each pose;
+        ``xyz`` (N, 3) float32 — ROS frame (x forward, y left, z up);
+        ``yaw`` (N,) float32 — CCW radians; ``pickup_steps`` (K,) int32 — one
+        entry per reward pickup, the update index it happened on.
+        """
+        if not self.record_trajectory:
+            return None
+        import numpy as np
+        rows = np.asarray(self._traj_rows, dtype=np.float64).reshape(-1, 5)
+        return {
+            "steps": rows[:, 0].astype(np.int32),
+            "xyz": rows[:, 1:4].astype(np.float32),
+            "yaw": rows[:, 4].astype(np.float32),
+            "pickup_steps": np.asarray(self._traj_pickup_steps, dtype=np.int32),
+        }
 
     def get_total_explorable_area_m2(self) -> "float | None":
         """Total grid area in m² (None if exploration is not enabled)."""
