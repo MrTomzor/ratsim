@@ -86,6 +86,8 @@ def plot_trajectories(
     background: Optional[np.ndarray] = None,
     view_proj: Optional[np.ndarray] = None,
     colour_by_time: bool = False,
+    cmap: str = "viridis",
+    time_range: Optional[tuple] = None,
     subsample: int = 1,
     show_pickups: bool = True,
     show_start_end: bool = True,
@@ -93,7 +95,7 @@ def plot_trajectories(
     alpha: float = 0.9,
     legend: bool = False,
     title: Optional[str] = None,
-) -> None:
+):
     """Draw every trajectory in ``trajs`` on ``ax``.
 
     Each entry: ``{"xyz": (N,3) ROS, "steps": (N,), "pickup_steps": (K,),
@@ -102,6 +104,13 @@ def plot_trajectories(
     ``world_bounds=(width, height)`` in metres sets the axes limits (blank
     slate). With ``background`` (H,W,3 image) and ``view_proj`` the axes are
     in pixels and the image is drawn underneath.
+
+    ``colour_by_time`` colours the line by step through ``cmap`` instead of by
+    trajectory; ``time_range=(t0, t1)`` fixes the colour scale (pass the same
+    range for every panel so colours mean the same step everywhere; default:
+    this call's own step range). Start is a white circle, end a black square,
+    pickups stars in the colour of their step. Returns the ``ScalarMappable``
+    used (for a colourbar) when colouring by time, else ``None``.
     """
     from matplotlib.collections import LineCollection
 
@@ -116,6 +125,18 @@ def plot_trajectories(
         ax.add_patch(_bounds_patch(wb_w, wb_h))
 
     colors = default_colors(len(trajs))
+    mappable = None
+    if colour_by_time:
+        import matplotlib as mpl
+        if time_range is None:
+            all_steps = [np.asarray(t.get("steps", [])) for t in trajs]
+            all_steps = [a for a in all_steps if a.size]
+            lo = min(float(a.min()) for a in all_steps) if all_steps else 0.0
+            hi = max(float(a.max()) for a in all_steps) if all_steps else 1.0
+        else:
+            lo, hi = float(time_range[0]), float(time_range[1])
+        norm = mpl.colors.Normalize(vmin=lo, vmax=max(hi, lo + 1e-9))
+        mappable = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
     for i, t in enumerate(trajs):
         xyz = np.asarray(t["xyz"], dtype=np.float64).reshape(-1, 3)
         if len(xyz) == 0:
@@ -137,8 +158,9 @@ def plot_trajectories(
 
         if colour_by_time and len(pts) > 1:
             segs = np.stack([pts[:-1], pts[1:]], axis=1)
-            lc = LineCollection(segs, cmap="viridis", linewidths=linewidth, alpha=alpha, zorder=2)
-            lc.set_array(np.linspace(0, 1, len(segs)))
+            lc = LineCollection(segs, cmap=cmap, norm=mappable.norm, linewidths=linewidth,
+                                alpha=alpha, zorder=2)
+            lc.set_array(0.5 * (steps_k[:-1] + steps_k[1:]).astype(np.float64))
             ax.add_collection(lc)
             if label:
                 ax.plot([], [], color="k", lw=linewidth, label=label)
@@ -147,9 +169,11 @@ def plot_trajectories(
                     label=label, zorder=2)
 
         if show_start_end:
-            ax.plot(pts[0, 0], pts[0, 1], marker="o", ms=5, color=color,
+            c_start = "white" if colour_by_time else color
+            c_end = "black" if colour_by_time else color
+            ax.plot(pts[0, 0], pts[0, 1], marker="o", ms=5, color=c_start,
                     mec="k", mew=0.6, zorder=4)
-            ax.plot(pts[-1, 0], pts[-1, 1], marker="s", ms=5, color=color,
+            ax.plot(pts[-1, 0], pts[-1, 1], marker="s", ms=5, color=c_end,
                     mec="k", mew=0.6, zorder=4)
 
         if show_pickups:
@@ -159,8 +183,13 @@ def plot_trajectories(
                 p_xyz = xyz[idx]
                 p_pts = (project_to_pixels(p_xyz, view_proj, w, h) if use_pixels
                          else ros_to_unity_xz(p_xyz))
-                ax.plot(p_pts[:, 0], p_pts[:, 1], linestyle="none", marker="*",
-                        ms=8, color=color, mec="k", mew=0.5, zorder=5)
+                if colour_by_time:
+                    ax.scatter(p_pts[:, 0], p_pts[:, 1], marker="*", s=70,
+                               c=mappable.to_rgba(pk.astype(np.float64)),
+                               edgecolors="k", linewidths=0.5, zorder=5)
+                else:
+                    ax.plot(p_pts[:, 0], p_pts[:, 1], linestyle="none", marker="*",
+                            ms=8, color=color, mec="k", mew=0.5, zorder=5)
 
     if use_pixels:
         ax.set_xlim(0, w)
@@ -175,6 +204,7 @@ def plot_trajectories(
         ax.set_title(title)
     if legend:
         ax.legend(loc="upper right", fontsize="small")
+    return mappable
 
 
 def _bounds_patch(width: float, height: float):
