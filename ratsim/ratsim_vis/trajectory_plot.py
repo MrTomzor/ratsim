@@ -92,6 +92,8 @@ def plot_trajectories(
     show_pickups: bool = True,
     show_start_end: bool = True,
     linewidth: float = 1.2,
+    markersize: float = 5.0,
+    pickup_size: float = 8.0,
     alpha: float = 0.9,
     legend: bool = False,
     title: Optional[str] = None,
@@ -109,7 +111,9 @@ def plot_trajectories(
     trajectory; ``time_range=(t0, t1)`` fixes the colour scale (pass the same
     range for every panel so colours mean the same step everywhere; default:
     this call's own step range). Start is a white circle, end a black square,
-    pickups stars in the colour of their step. Returns the ``ScalarMappable``
+    pickups stars in the colour of their step. ``markersize`` is the start /
+    end marker size and ``pickup_size`` the pickup star size, both in points
+    (matplotlib ``ms``). Returns the ``ScalarMappable``
     used (for a colourbar) when colouring by time, else ``None``.
     """
     from matplotlib.collections import LineCollection
@@ -171,9 +175,9 @@ def plot_trajectories(
         if show_start_end:
             c_start = "white" if colour_by_time else color
             c_end = "black" if colour_by_time else color
-            ax.plot(pts[0, 0], pts[0, 1], marker="o", ms=5, color=c_start,
+            ax.plot(pts[0, 0], pts[0, 1], marker="o", ms=markersize, color=c_start,
                     mec="k", mew=0.6, zorder=4)
-            ax.plot(pts[-1, 0], pts[-1, 1], marker="s", ms=5, color=c_end,
+            ax.plot(pts[-1, 0], pts[-1, 1], marker="s", ms=markersize, color=c_end,
                     mec="k", mew=0.6, zorder=4)
 
         if show_pickups:
@@ -184,12 +188,12 @@ def plot_trajectories(
                 p_pts = (project_to_pixels(p_xyz, view_proj, w, h) if use_pixels
                          else ros_to_unity_xz(p_xyz))
                 if colour_by_time:
-                    ax.scatter(p_pts[:, 0], p_pts[:, 1], marker="*", s=70,
+                    ax.scatter(p_pts[:, 0], p_pts[:, 1], marker="*", s=pickup_size ** 2,
                                c=mappable.to_rgba(pk.astype(np.float64)),
                                edgecolors="k", linewidths=0.5, zorder=5)
                 else:
                     ax.plot(p_pts[:, 0], p_pts[:, 1], linestyle="none", marker="*",
-                            ms=8, color=color, mec="k", mew=0.5, zorder=5)
+                            ms=pickup_size, color=color, mec="k", mew=0.5, zorder=5)
 
     if use_pixels:
         ax.set_xlim(0, w)
