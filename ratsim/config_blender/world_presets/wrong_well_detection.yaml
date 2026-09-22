@@ -1,0 +1,9 @@
+# Overlay: layer LAST on any well_schedule world, e.g.
+#   blend_presets("world", ["widloski_maze_3x3_tight", "wrong_well_detection"])
+#
+# Unity then reports every dwell at a NON-target well on /well/wrong_activation
+# ([well_id, trial_type, reward_at_stake]). Detection only — the world is otherwise
+# identical; what an event costs is the task preset's call
+# (foraging_settings.wrong_well_penalty_fraction / wrong_well_penalty_trials).
+well_schedule/wrong_well_detection: "1"
+well_schedule/wrong_well_delay_steps: "-1"   # -1 = same dwell the armed well of that trial needs

@@ -46,6 +46,7 @@ class TaskTracker:
     # Topic suffixes (matched against the end of every incoming topic name)
     _COLLISION_SUFFIX = "collisions"
     _REWARD_PICKUP_SUFFIX = "reward_pickup"
+    _WRONG_WELL_SUFFIX = "wrong_activation"
     _HEALTH_SUFFIX = "health"
     _BATTERY_SUFFIX = "battery"
     _ALL_REWARDS_COLLECTED_SUFFIX = "all_rewards_collected"
@@ -68,6 +69,17 @@ class TaskTracker:
         foraging = task_config.get("foraging_settings", {})
         self.pickup_reward_modifier = foraging.get("reward_object_pickup_modifier", 1.0)
         self.negative_pickup_modifier = foraging.get("negative_pickups_modifier", 1.0)
+        # Wrong-well activations (wells task; Unity reports them when
+        # well_schedule/wrong_well_detection=1). The penalty is a fraction of what a
+        # correct activation would have paid: fraction * reward_at_stake *
+        # reward_object_pickup_modifier. `trials` picks which trial types are
+        # penalised: "home" | "random" | "both". Events are counted either way.
+        self.wrong_well_penalty_fraction = float(foraging.get("wrong_well_penalty_fraction", 0.0))
+        self.wrong_well_penalty_trials = str(foraging.get("wrong_well_penalty_trials", "home")).lower()
+        if self.wrong_well_penalty_trials not in ("home", "random", "both"):
+            raise ValueError(
+                f"foraging_settings.wrong_well_penalty_trials must be home|random|both, "
+                f"got {self.wrong_well_penalty_trials!r}")
 
         collision = task_config.get("collision_settings", {})
         self.penalize_collisions = collision.get("penalize_collisions", True)
@@ -157,6 +169,7 @@ class TaskTracker:
         self._terminated = False
         self._termination_reason = None
         self._num_reward_objs_picked_up = 0
+        self._wrong_well_activations = {"random": 0, "home": 0}
         self._collision_count = 0
         self._exploration_area_m2 = 0.0
         # Reset per-episode diagnostic state so the "first exploration update"
@@ -221,6 +234,18 @@ class TaskTracker:
             if self.record_trajectory:
                 self._traj_pickup_steps.extend([self._update_count] * num_pickups)
             print(f"[TaskTracker] Picked up {num_pickups} objects, score += {num_pickups * self.pickup_reward_modifier:.2f}")
+
+        # --- Wrong-well activations: [well_id, trial_type (0=random,1=home), reward_at_stake] ---
+        for topic in self._topics_by_suffix(msgs, self._WRONG_WELL_SUFFIX):
+            for msg in msgs[topic]:
+                well_id, trial_type, at_stake = msg.data[:3]
+                trial = "home" if int(trial_type) == 1 else "random"
+                self._wrong_well_activations[trial] += 1
+                penalty = 0.0
+                if self.wrong_well_penalty_trials in (trial, "both"):
+                    penalty = self.wrong_well_penalty_fraction * at_stake * self.pickup_reward_modifier
+                    self._step_score -= penalty
+                print(f"[TaskTracker] Wrong well {int(well_id)} on {trial} trial, penalty={penalty:.2f}")
 
         # --- Battery depletion (any agent) ---
         if self.terminate_on_zero_battery and not self._terminated:
@@ -411,6 +436,11 @@ class TaskTracker:
 
     def get_num_reward_objs_picked_up(self) -> int:
         return self._num_reward_objs_picked_up
+
+    def get_wrong_well_activations(self) -> dict:
+        """Wrong-well activations this episode by trial type: {"random": n, "home": n}.
+        Counts every event, penalised or not."""
+        return dict(self._wrong_well_activations)
 
     def get_collision_count(self) -> int:
         return self._collision_count
