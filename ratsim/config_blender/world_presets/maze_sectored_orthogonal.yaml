@@ -5,8 +5,10 @@
 # Topology guarantee: chamber has exactly 4 exits (one straight corridor per
 # cardinal direction). Each corridor leads to a forced axis-aligned "first room"
 # in that sector; the rest of the sector branches off from there via per-sector
-# MST + loops. Diagonal sector dividers are stamped 2 cells thick (staircase) so
-# lidar can't leak through diagonal pinholes between adjacent sectors.
+# MST + loops. There are no explicit divider walls: rooms are confined to their
+# wedge and every intra-sector L-corridor bends at the room farther from the
+# chamber, which keeps the corridor inside the (convex) wedge — so sectors never
+# touch (MazeLayoutLoader verifies this per episode and warns if it ever fails).
 
 seed: 42
 chunk_width: 64
