@@ -111,7 +111,10 @@ def run_human_session(
     conn.process_worldgen_status()
 
     # Episode loop — Python just ticks the sim and reads metrics,
-    # Unity handles human input directly.
+    # Unity handles human input directly. In Unity's wait-for-input mode
+    # (Twist2DActuator.humanControlWaitForInput) a tick with no key pressed is
+    # held: no physics, no timers, and /sim_control/step_skipped comes back.
+    # Held ticks don't count as episode steps.
     # Physics step is 0.02s (50Hz). RTF=1.0 means 50 ticks/s real-time.
     PHYSICS_DT = 0.02
     target_dt = PHYSICS_DT / rtf  # wall-clock seconds between ticks
@@ -120,6 +123,8 @@ def run_human_session(
         max_steps = tracker.episode_max_steps
 
     print(f"Human control active. Max steps: {max_steps if max_steps > 0 else 'unlimited'}, RTF: {rtf}")
+    print("Keys (Unity window): WASD = move, Space = wait in place, hold Shift = slow. "
+          "Time only advances while a key is held.")
     print("Hotkeys (in this terminal): R = reload world with seed+1, Q = quit")
 
     reload_requested = False
@@ -130,14 +135,16 @@ def run_human_session(
 
             conn.send_messages_and_step(enable_physics_step=True)
             msgs = conn.read_messages_from_unity()
+            step_held = bool(msgs.get("/sim_control/step_skipped"))
 
-            step_count += 1
-            tracker.update_with_unity_msgs(msgs)
+            if not step_held:
+                step_count += 1
+                tracker.update_with_unity_msgs(msgs)
 
-            # Send step score back to Unity for UI visualization
-            conn.publish(Float32Message(data=tracker.get_this_step_score()), "/step_score")
+                # Send step score back to Unity for UI visualization
+                conn.publish(Float32Message(data=tracker.get_this_step_score()), "/step_score")
 
-            if step_count % 100 == 0:
+            if not step_held and step_count % 100 == 0:
                 print(f"  step {step_count} | score={tracker.get_total_score():.3f} "
                       f"| pickups={tracker.get_num_reward_objs_picked_up()} "
                       f"| collisions={tracker.get_collision_count()}")
