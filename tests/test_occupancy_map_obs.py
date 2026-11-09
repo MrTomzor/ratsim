@@ -99,6 +99,18 @@ def test_reset_clears():
     assert not m.render().any()
 
 
+def test_occlusion_scan_is_skipped():
+    m = OccupancyMapObservation(200.0, 200.0, size=100, supersample=1)
+    fault = lidar([0.5] * 36)
+    assert m.is_occlusion_scan(fault)
+    assert not m.is_occlusion_scan(lidar([0.5] * 35 + [0.6]))
+    assert not m.is_occlusion_scan(lidar([10.0] * 36))   # uniform but far: real
+    m.update(pose(3.0, 4.0), fault)
+    img = m.render()
+    assert not img[:, :, :2].any()      # nothing integrated
+    assert img[:, :, 2].any()           # agent marker still follows the pose
+
+
 if __name__ == "__main__":
     # No pytest in the project venvs: `python tests/test_occupancy_map_obs.py`.
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_")]

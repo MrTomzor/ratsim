@@ -23,7 +23,9 @@ directly with a world snapshot.
 Collectable reward objects are not written into the grid as obstacles: a ray
 whose hit carries the reward semantic class clears the cells along it but
 leaves its endpoint untouched — otherwise every cube would remain a permanent
-obstacle after pickup (the grid never clears OCCUPIED cells). Other dynamic
+obstacle after pickup (the grid never clears OCCUPIED cells). Occlusion-fault
+scans (all rays at one short range, emitted while touching an object) are
+dropped entirely, as the frontier explorer does. Other dynamic
 objects (rubble, walkers) are NOT handled; this map is only meant for static
 worlds.
 """
@@ -91,7 +93,7 @@ class OccupancyMapObservation:
         if pose_msg is None:
             return
         self.agent_xy = (pose_msg.x, pose_msg.y)
-        if lidar_msg is None:
+        if lidar_msg is None or self.is_occlusion_scan(lidar_msg):
             return
         yaw = yaw_from_quat(pose_msg.qx, pose_msg.qy, pose_msg.qz, pose_msg.qw)
         angle_start, angle_inc = lidar_angles_ros(lidar_msg)
@@ -105,6 +107,18 @@ class OccupancyMapObservation:
             max_range=lidar_msg.maxRange,
             no_occupy=self._reward_hits(lidar_msg),
         )
+
+    @staticmethod
+    def is_occlusion_scan(lidar_msg) -> bool:
+        """The lidar's simulated occlusion fault: while the agent touches an
+        object every ray reports the same short range (``occlusionDistance``,
+        0.5 m) with no semantics. Integrating it would stamp a permanent ring
+        of phantom obstacles around the bump site, so such scans are skipped —
+        same test as ``ratsim_ros2/foraging_explorer.py:_is_occlusion_scan``."""
+        ranges = np.asarray(lidar_msg.ranges, dtype=np.float64)
+        if ranges.size == 0 or np.any(ranges <= 0):
+            return False
+        return float(ranges.max() - ranges.min()) < 1e-4 and float(ranges[0]) < 1.0
 
     def _reward_hits(self, lidar_msg):
         """Bool per ray: did it hit a reward object? None if unknowable."""
