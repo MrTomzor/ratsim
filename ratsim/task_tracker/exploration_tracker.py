@@ -25,6 +25,21 @@ FREE = 0
 OCCUPIED = 100
 
 
+def lidar_angles_ros(lidar_msg) -> "tuple[float, float]":
+    """(angle_start_rad, angle_increment_rad) of a Lidar2DMessage in ROS math
+    convention, as ``update_from_lidar`` expects them.
+
+    Unity's lidar publishes angles in Unity local frame (angle=0 → Unity +Z =
+    forward; angle=+90 → Unity +X = right). The tracker expects standard ROS
+    math convention (angle=0 → local +x forward; angle grows CCW toward local
+    +y left). Unity angle α corresponds to ROS angle −α, so negate here.
+    Without this flip every ray is mirrored left↔right, which places occupied
+    cells on the wrong side of the agent.
+    """
+    return (-math.radians(lidar_msg.angleStartDeg),
+            -math.radians(lidar_msg.angleIncrementDeg))
+
+
 def _bresenham_ray(
     x0: int, y0: int, x1: int, y1: int, max_cells: int
 ) -> np.ndarray:
@@ -138,8 +153,15 @@ class ExplorationTracker:
         angle_start_rad: float,
         angle_increment_rad: float,
         max_range: float,
+        no_occupy: "Optional[np.ndarray]" = None,
     ) -> "dict":
         """Integrate one lidar scan.
+
+        ``no_occupy`` (optional, bool per ray): for rays flagged True a hit
+        still clears the cells along the ray, but the endpoint is left as it
+        was instead of being marked OCCUPIED. Used for transient objects (e.g.
+        collectable reward objects) that would otherwise leave a permanent
+        obstacle in the grid once picked up.
 
         Returns a dict::
 
@@ -217,7 +239,9 @@ class ExplorationTracker:
             end_r = rows[-1]
             end_c = cols[-1]
             existing_end = self.grid[end_r, end_c]
-            if hit:
+            if hit and no_occupy is not None and no_occupy[i]:
+                pass
+            elif hit:
                 if existing_end == UNKNOWN:
                     newly_known += 1
                 self.grid[end_r, end_c] = OCCUPIED

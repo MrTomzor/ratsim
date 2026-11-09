@@ -1,6 +1,4 @@
-import math
-
-from ratsim.task_tracker.exploration_tracker import ExplorationTracker
+from ratsim.task_tracker.exploration_tracker import ExplorationTracker, lidar_angles_ros
 from ratsim.task_tracker.exploration_viewer import ExplorationViewer
 from ratsim.transforms import yaw_from_quat
 
@@ -303,15 +301,8 @@ class TaskTracker:
 
         agent_yaw = yaw_from_quat(pose_msg.qx, pose_msg.qy, pose_msg.qz, pose_msg.qw)
 
-        # Unity's lidar publishes angles in Unity local frame
-        # (angle=0 → Unity +Z = forward; angle=+90 → Unity +X = right).
-        # ExplorationTracker expects standard ROS math convention
-        # (angle=0 → local +x forward; angle grows CCW toward local +y left).
-        # Unity angle α corresponds to ROS angle −α, so negate here. Without
-        # this flip every ray is mirrored left↔right, which places occupied
-        # cells on the wrong side of the agent.
-        angle_start_rad = -math.radians(lidar_msg.angleStartDeg)
-        angle_increment_rad = -math.radians(lidar_msg.angleIncrementDeg)
+        # Unity → ROS angle convention (negated); see lidar_angles_ros.
+        angle_start_rad, angle_increment_rad = lidar_angles_ros(lidar_msg)
 
         stats = self.exploration_tracker.update_from_lidar(
             agent_x=pose_msg.x,
