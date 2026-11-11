@@ -1,0 +1,45 @@
+# sphereagent_2d_lidar_wells_cue_nopose + the occupancy_map observation: the
+# map-oracle variant of the paper's "4arm-submazes-foraging" agent (ICLR
+# rebuttal, reviewer H9gT). Everything above the occupancy_map block is
+# identical to sphereagent_2d_lidar_wells_cue_nopose.
+#
+# Wells are not marked specially in the map: a lidar hit on a well is stamped
+# OCCUPIED like any obstacle, so a well shows as a small isolated blob inside a
+# room (sub-pixel: 1 m well at 200/128 = 1.56 m/px). The map does NOT reveal
+# which well is Home, so the Home-identity memory demand remains.
+#
+# Note: the map's agent marker comes from ground-truth pose, so this "nopose"
+# agent effectively gets its position back through the map. That is inherent
+# to the oracle (the frontier explorer's map also uses ground-truth pose).
+prefab_name: SphereAgent
+name_prefix: rat1
+sensors:
+  - name: lidar2d
+    maxRange: 30.0
+    angleStartDeg: -90
+    angleEndDeg: 90
+    angleIncrementDeg: 10
+    occlusionRegion: none
+    occlusionDistance: 0.5
+    semanticSet: reward_well_obstacle
+  - name: collision
+  - name: compass
+    biasRad: 0.0
+  - name: sector_signal
+    channels: cue
+    nSectors: 8
+    sigmaBins: 1.0
+    topicPrefix: /sector_signal
+  # Python-only: sensed occupancy map (lidar + ground-truth pose, i.e. the
+  # frontier explorer's map) as a 128x128x3 uint8 image observation. Never
+  # sent to Unity. See ratsim/task_tracker/occupancy_map_obs.py.
+  - name: occupancy_map
+    size: 128
+    supersample: 2
+    reward_descriptor_index: 0   # class 0 of reward_well_obstacle = reward_pickup (dispensed cubes)
+    agent_marker_radius: 1
+actuators: velocity
+velocity/steeringBias: 0.0
+velocity/blockLeftTurn: false
+velocity/blockRightTurn: false
+max_health: 100.0
